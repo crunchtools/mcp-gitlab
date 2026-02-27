@@ -75,10 +75,31 @@ The server MUST support all three MCP transports:
 
 ### 6. Semantic Versioning
 
-Follow Semantic Versioning 2.0.0 strictly.
-- **MAJOR**: Breaking API changes, removed tools, renamed env vars
-- **MINOR**: New tools, new tool parameters, new features
-- **PATCH**: Bug fixes, documentation, test improvements
+Follow [Semantic Versioning 2.0.0](https://semver.org/) strictly.
+
+**MAJOR** (breaking changes — consumers must update):
+- Removed or renamed tools
+- Changed tool parameter names or types
+- Renamed environment variables
+- Changed default behavior of existing tools
+
+**MINOR** (new functionality — backwards compatible):
+- New tools added
+- New optional parameters on existing tools
+- New tool groups (e.g., adding wiki support)
+
+**PATCH** (fixes — no functional change):
+- Bug fixes in existing tools
+- Test additions or improvements
+- Security patches (dependency updates)
+
+**No version bump required** (infrastructure, not shipped):
+- CI/CD changes (workflows, gourmand config)
+- Documentation (README, CLAUDE.md, SECURITY.md)
+- Issue templates, pre-commit config
+- Governance files (.specify/)
+
+**Version bump happens at release time, not per-commit.** Multiple commits can accumulate between releases. The version in `pyproject.toml` and `server.py` is bumped when cutting a release tag.
 
 ### 7. AI Code Quality
 
