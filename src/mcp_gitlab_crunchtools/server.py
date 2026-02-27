@@ -76,7 +76,7 @@ logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     name="mcp-gitlab-crunchtools",
-    version="0.1.0",
+    version="0.3.0",
     instructions=(
         "Secure MCP server for GitLab projects, merge requests, issues, "
         "pipelines, and search. Works with any GitLab instance."
