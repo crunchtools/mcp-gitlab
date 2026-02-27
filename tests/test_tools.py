@@ -21,9 +21,8 @@ class TestToolRegistration:
 
     def test_imports(self) -> None:
         """All tool functions should be importable."""
-        from mcp_gitlab_crunchtools.tools import __all__
-
         import mcp_gitlab_crunchtools.tools as tools_mod
+        from mcp_gitlab_crunchtools.tools import __all__
 
         for name in __all__:
             func = getattr(tools_mod, name)
@@ -249,14 +248,13 @@ def _mock_response(
     resp_headers = {"content-type": content_type}
     if headers:
         resp_headers.update(headers)
-    resp = httpx.Response(
+    return httpx.Response(
         status_code=status_code,
         headers=resp_headers,
         json=json_data if json_data is not None else None,
         text=text if json_data is None else None,
         request=httpx.Request("GET", "https://gitlab.com/api/v4/test"),
     )
-    return resp
 
 
 @pytest.fixture(autouse=True)
@@ -519,7 +517,7 @@ class TestProjectTools:
         )
 
         with _patch_client(resp) as mock_client:
-            result = await get_project(project_id="group/my-project")
+            await get_project(project_id="group/my-project")
             call_args = mock_client.return_value.request.call_args
             assert "group%2Fmy-project" in call_args.kwargs.get("url", "")
 
