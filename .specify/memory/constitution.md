@@ -104,13 +104,93 @@ All code MUST pass Gourmand checks before merge. Zero violations required.
 
 ---
 
-## III. Code Quality Gates
+## III. Testing Standards
+
+### Mocked API Tests (MANDATORY)
+
+Every tool MUST have a corresponding mocked test. Tests use `httpx.AsyncClient` mocking — no live API calls, no tokens required in CI.
+
+**Pattern:**
+1. Build a mock `httpx.Response` with `_mock_response()` helper
+2. Patch `httpx.AsyncClient` via `_patch_client()` context manager
+3. Call the tool function directly (not the `_tool` wrapper)
+4. Assert response structure and values
+
+**Required test classes per tool group:**
+
+| Tool Group | Test Class | Minimum Tests |
+|------------|-----------|---------------|
+| Each read tool | `test_list_*`, `test_get_*` | Verify pagination headers, response shape |
+| Each write tool | `test_create_*`, `test_update_*` | Verify POST/PUT with correct status codes |
+| Each delete tool | `test_delete_*` | Verify 204 No Content handling |
+| Error cases | `TestClientErrorHandling` | 401, 404, 429, 204 responses |
+
+**Singleton reset:** The `_reset_client_singleton` autouse fixture resets `client._client` and `config._config` between every test to prevent state leakage.
+
+**Tool count assertion:** `test_tool_count` MUST be updated whenever tools are added or removed. This catches accidental regressions.
+
+### Input Validation Tests
+
+Every Pydantic model in `models.py` MUST have tests in `test_validation.py`:
+- Valid minimal input
+- Valid full input
+- Invalid/rejected inputs (empty strings, too-long values, extra fields, bad state events)
+- Injection prevention (special characters in project/group IDs)
+
+### Security Tests
+
+- Token sanitization: `GitLabApiError` MUST scrub tokens from messages
+- ID truncation: `ProjectNotFoundError` MUST truncate long identifiers
+- Config safety: `repr()` and `str()` MUST never expose the token
+
+---
+
+## IV. Gourmand (AI Slop Detection)
+
+All code MUST pass `gourmand --full .` with **zero violations** before merge. Gourmand is a CI gate in GitHub Actions.
+
+### Configuration
+
+- `gourmand.toml` — Check settings, excluded paths
+- `gourmand-exceptions.toml` — Documented exceptions with justifications
+- `.gourmand-cache/` — Must be in `.gitignore`
+
+### Checks That Apply
+
+| Check | What it catches |
+|-------|----------------|
+| `linter_configuration` | Missing ruff rules, no pre-commit hooks |
+| `lint_suppression` | `type: ignore` without fix |
+| `generic_names` | Variables named `data`, `result`, `temp` |
+| `verbose_comments` | Redundant comments restating code |
+| `summary_litter` | AI status/summary files in project root |
+| `prefer_match` | elif chains that should be match/case |
+| `primitive_obsession` | Magic numbers without named constants |
+| `copy_paste_detection` | Duplicated code blocks |
+| `single_use_helpers` | Unnecessary abstractions |
+| `speculative_generality` | YAGNI violations |
+
+### Exception Policy
+
+Exceptions MUST have documented justifications in `gourmand-exceptions.toml`. Acceptable reasons:
+- Standard API patterns (HTTP status codes, pagination params)
+- Test-specific patterns (intentional invalid input)
+- Framework requirements (CLAUDE.md for Claude Code)
+
+Unacceptable reasons:
+- "The code is special"
+- "The threshold is too strict"
+- Rewording to avoid detection
+
+---
+
+## V. Code Quality Gates
 
 Every code change must pass through these gates in order:
 
 1. **Lint** — `uv run ruff check src tests`
 2. **Type Check** — `uv run mypy src`
-3. **Tests** — `uv run pytest -v` (98+ tests, all passing)
+3. **Tests** — `uv run pytest -v` (all passing, mocked httpx)
 4. **Gourmand** — `gourmand --full .` (zero violations)
 5. **Container Build** — `podman build -f Containerfile .`
 
@@ -127,7 +207,7 @@ Every code change must pass through these gates in order:
 
 ---
 
-## IV. Naming Conventions
+## VI. Naming Conventions
 
 | Context | Name |
 |---------|------|
@@ -142,7 +222,7 @@ Every code change must pass through these gates in order:
 
 ---
 
-## V. Development Workflow
+## VII. Development Workflow
 
 ### Adding a New Tool
 
@@ -164,7 +244,7 @@ Every code change must pass through these gates in order:
 
 ---
 
-## VI. Governance
+## VIII. Governance
 
 ### Amendment Process
 
