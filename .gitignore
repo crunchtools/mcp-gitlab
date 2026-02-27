@@ -85,6 +85,9 @@ uv.lock
 .envrc
 .direnv/
 
+# Gourmand
+.gourmand-cache/
+
 # OS files
 .DS_Store
 Thumbs.db

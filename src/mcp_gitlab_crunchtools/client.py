@@ -19,10 +19,7 @@ from .errors import (
 
 logger = logging.getLogger(__name__)
 
-# Response size limit to prevent memory exhaustion (10MB)
 MAX_RESPONSE_SIZE = 10 * 1024 * 1024
-
-# Request timeout in seconds
 REQUEST_TIMEOUT = 30.0
 
 
@@ -102,46 +99,39 @@ class GitLabClient:
         except httpx.RequestError as e:
             raise GitLabApiError(0, f"Request failed: {e}") from e
 
-        # Check response size before parsing
         content_length = response.headers.get("content-length")
         if content_length and int(content_length) > MAX_RESPONSE_SIZE:
             raise GitLabApiError(0, "Response too large")
 
-        # Handle error responses before parsing
         if not response.is_success:
             self._handle_error_response(response)
 
-        # Handle 204 No Content (e.g., DELETE responses)
         if response.status_code == 204:
             return {"status": "deleted"}
 
-        # Some endpoints return plain text (e.g., job trace)
         content_type = response.headers.get("content-type", "")
         if "text/plain" in content_type:
             return {"content": response.text}
 
-        # Parse JSON response
         try:
-            data = response.json()
+            parsed = response.json()
         except ValueError as e:
             raise GitLabApiError(
                 response.status_code, f"Invalid JSON response: {e}"
             ) from e
 
-        # Wrap list responses with pagination info
-        if isinstance(data, list):
-            return self._wrap_list_response(data, response)
+        if isinstance(parsed, list):
+            return self._wrap_list_response(parsed, response)
 
-        return data  # type: ignore[no-any-return]
+        if isinstance(parsed, dict):
+            return parsed
+        return {"data": parsed}
 
     def _wrap_list_response(
-        self, data: list[Any], response: httpx.Response
+        self, items: list[Any], response: httpx.Response
     ) -> dict[str, Any]:
-        """Wrap a list response with GitLab pagination headers.
-
-        GitLab uses X-Total, X-Total-Pages, X-Page, X-Per-Page, X-Next-Page headers.
-        """
-        result: dict[str, Any] = {"items": data}
+        """Wrap a list response with GitLab pagination headers."""
+        wrapped: dict[str, Any] = {"items": items}
 
         pagination: dict[str, Any] = {}
         for header, key in [
@@ -157,9 +147,9 @@ class GitLabClient:
                 pagination[key] = int(value)
 
         if pagination:
-            result["pagination"] = pagination
+            wrapped["pagination"] = pagination
 
-        return result
+        return wrapped
 
     def _handle_error_response(self, response: httpx.Response) -> None:
         """Handle error responses from the API.
@@ -172,16 +162,15 @@ class GitLabClient:
         """
         status_code = response.status_code
 
-        # Try to extract error message
         error_msg: str = "Unknown error"
         try:
-            data = response.json()
-            if isinstance(data, dict):
-                raw_msg = data.get("message", data.get("error"))
+            error_body = response.json()
+            if isinstance(error_body, dict):
+                raw_msg = error_body.get("message", error_body.get("error"))
                 if isinstance(raw_msg, (dict, str, int, float)):
                     error_msg = str(raw_msg)
             else:
-                error_msg = str(data)
+                error_msg = str(error_body)
         except ValueError:
             error_msg = response.text[:200] if response.text else "Unknown error"
 
@@ -197,7 +186,6 @@ class GitLabClient:
 
         raise GitLabApiError(status_code, error_msg)
 
-    # Convenience methods for HTTP verbs
 
     async def get(
         self, path: str, params: dict[str, Any] | None = None
@@ -227,7 +215,6 @@ class GitLabClient:
         return await self._request("DELETE", path)
 
 
-# Global client instance
 _client: GitLabClient | None = None
 
 

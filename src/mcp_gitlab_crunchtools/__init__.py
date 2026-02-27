@@ -5,13 +5,10 @@ issues, pipelines, and search. Works with any GitLab instance
 (gitlab.com, self-hosted, or enterprise).
 
 Usage:
-    # Run directly
     mcp-gitlab-crunchtools
 
-    # Or with Python module
     python -m mcp_gitlab_crunchtools
 
-    # With uvx
     uvx mcp-gitlab-crunchtools
 
 Environment Variables:

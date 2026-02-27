@@ -36,20 +36,16 @@ class Config:
                 "https://gitlab.com/-/user_settings/personal_access_tokens"
             )
 
-        # Store as SecretStr to prevent accidental logging
         self._token = SecretStr(token)
 
-        # Configurable base URL for self-hosted GitLab instances
         gitlab_url = os.environ.get("GITLAB_URL", "https://gitlab.com").rstrip("/")
 
-        # Validate URL
         parsed = urlparse(gitlab_url)
         if not parsed.scheme or not parsed.netloc:
             raise ConfigurationError(
                 "Invalid GITLAB_URL: must be a valid URL (e.g. https://gitlab.com)"
             )
 
-        # Enforce HTTPS unless localhost
         if parsed.scheme != "https" and parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
             raise ConfigurationError(
                 "GITLAB_URL must use HTTPS for non-localhost URLs"
@@ -57,19 +53,18 @@ class Config:
 
         self._base_url = gitlab_url
 
-        # SSL verification: supports SSL_CERT_FILE for custom CA bundles
-        # and GITLAB_SSL_VERIFY=false as an escape hatch for self-signed certs
-        ssl_verify_env = os.environ.get("GITLAB_SSL_VERIFY", "true").lower()
+        ssl_disabled = os.environ.get("GITLAB_SSL_VERIFY", "true").lower() in ("false", "0", "no")
         ssl_cert_file = os.environ.get("SSL_CERT_FILE")
 
-        if ssl_verify_env in ("false", "0", "no"):
-            self._ssl_verify: bool | str = False
-            logger.warning("SSL verification disabled via GITLAB_SSL_VERIFY")
-        elif ssl_cert_file:
-            self._ssl_verify = ssl_cert_file
-            logger.info("Using custom CA bundle: %s", ssl_cert_file)
-        else:
-            self._ssl_verify = True
+        match (ssl_disabled, ssl_cert_file):
+            case (True, _):
+                self._ssl_verify: bool | str = False
+                logger.warning("SSL verification disabled via GITLAB_SSL_VERIFY")
+            case (False, str(cert_path)):
+                self._ssl_verify = cert_path
+                logger.info("Using custom CA bundle: %s", cert_path)
+            case _:
+                self._ssl_verify = True
 
         logger.info("Configuration loaded successfully (GitLab: %s)", self._base_url)
 
@@ -111,7 +106,6 @@ class Config:
         return f"Config(gitlab_url={self._base_url}, token=***)"
 
 
-# Global configuration instance
 _config: Config | None = None
 
 

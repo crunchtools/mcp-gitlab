@@ -104,7 +104,6 @@ async def create_merge_request(
     Returns:
         Created merge request details
     """
-    # Validate input
     validated = CreateMergeRequestInput(
         source_branch=source_branch,
         target_branch=target_branch,

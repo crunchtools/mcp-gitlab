@@ -6,6 +6,8 @@ Internal errors should be caught and converted to UserError before propagating.
 
 import os
 
+SAFE_ID_MAX_LENGTH = 40
+
 
 class UserError(Exception):
     """Base class for safe errors that can be shown to users.
@@ -39,7 +41,10 @@ class ProjectNotFoundError(UserError):
     """Project not found or not accessible."""
 
     def __init__(self, identifier: str) -> None:
-        safe_id = identifier[:40] + "..." if len(identifier) > 40 else identifier
+        if len(identifier) > SAFE_ID_MAX_LENGTH:
+            safe_id = identifier[:SAFE_ID_MAX_LENGTH] + "..."
+        else:
+            safe_id = identifier
         super().__init__(f"Project not found or not accessible: {safe_id}")
 
 

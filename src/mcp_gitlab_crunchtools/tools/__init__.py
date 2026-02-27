@@ -54,17 +54,14 @@ from .users import get_current_user, get_user, list_users
 from .wiki import create_wiki_page, get_wiki_page, list_wiki_pages
 
 __all__ = [
-    # Projects
     "list_projects",
     "get_project",
     "list_project_branches",
     "get_project_branch",
     "list_project_commits",
-    # Groups
     "list_groups",
     "get_group",
     "list_group_projects",
-    # Merge Requests
     "list_merge_requests",
     "get_merge_request",
     "create_merge_request",
@@ -74,14 +71,12 @@ __all__ = [
     "get_mr_changes",
     "list_mr_discussions",
     "create_mr_discussion",
-    # Issues
     "list_issues",
     "get_issue",
     "create_issue",
     "update_issue",
     "list_issue_notes",
     "create_issue_note",
-    # Pipelines
     "list_pipelines",
     "get_pipeline",
     "create_pipeline",
@@ -93,40 +88,31 @@ __all__ = [
     "retry_job",
     "cancel_job",
     "delete_job",
-    # Files
     "list_repository_tree",
     "get_file",
     "create_file",
     "update_file",
-    # Branches
     "create_branch",
     "delete_branch",
     "compare_branches",
-    # Labels
     "list_labels",
     "create_label",
     "update_label",
     "delete_label",
-    # Users
     "get_current_user",
     "list_users",
     "get_user",
-    # Releases
     "list_releases",
     "get_release",
     "create_release",
-    # Milestones
     "list_milestones",
     "create_milestone",
     "update_milestone",
-    # Wiki
     "list_wiki_pages",
     "get_wiki_page",
     "create_wiki_page",
-    # Snippets
     "list_snippets",
     "create_snippet",
-    # Search
     "search_global",
     "search_project",
 ]

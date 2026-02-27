@@ -9,29 +9,28 @@ from urllib.parse import quote
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-# GitLab project/group IDs can be numeric or URL-encoded path strings
-# e.g., 12345 or "group%2Fsubgroup%2Fproject"
 PROJECT_ID_NUMERIC = re.compile(r"^\d+$")
-# Allowed characters in project/group path: alphanumeric, -, _, ., /
 PROJECT_PATH_PATTERN = re.compile(r"^[a-zA-Z0-9\-_./]+$")
 
-# Valid search scopes for GitLab search API
 SEARCH_SCOPES = frozenset({
     "projects", "issues", "merge_requests", "milestones",
     "snippet_titles", "wiki_blobs", "commits", "blobs", "notes", "users",
 })
 
-# Valid MR states
 MR_STATES = frozenset({"opened", "closed", "merged", "all"})
 
-# Valid issue states
 ISSUE_STATES = frozenset({"opened", "closed", "all"})
 
-# Valid pipeline statuses
 PIPELINE_STATUSES = frozenset({
     "created", "waiting_for_resource", "preparing", "pending",
     "running", "success", "failed", "canceled", "skipped", "manual", "scheduled",
 })
+
+MAX_TITLE_LENGTH = 500
+MAX_DESCRIPTION_LENGTH = 50000
+MAX_LABELS_LENGTH = 1000
+MAX_BRANCH_LENGTH = 255
+MAX_ASSIGNEES = 10
 
 
 def encode_project_id(project_id: str) -> str:
@@ -53,11 +52,9 @@ def encode_project_id(project_id: str) -> str:
 
     project_id = project_id.strip()
 
-    # Numeric IDs pass through directly
     if PROJECT_ID_NUMERIC.match(project_id):
         return project_id
 
-    # Path-style IDs: validate characters then URL-encode
     if not PROJECT_PATH_PATTERN.match(project_id):
         raise ValueError(
             "project_id must be a numeric ID or a path like 'group/project' "
@@ -102,16 +99,16 @@ class CreateIssueInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str = Field(
-        ..., min_length=1, max_length=500, description="Issue title"
+        ..., min_length=1, max_length=MAX_TITLE_LENGTH, description="Issue title"
     )
     description: str | None = Field(
-        default=None, max_length=50000, description="Issue description (Markdown)"
+        default=None, max_length=MAX_DESCRIPTION_LENGTH, description="Issue description (Markdown)"
     )
     labels: str | None = Field(
-        default=None, max_length=1000, description="Comma-separated label names"
+        default=None, max_length=MAX_LABELS_LENGTH, description="Comma-separated label names"
     )
     assignee_ids: list[int] | None = Field(
-        default=None, max_length=10, description="User IDs to assign"
+        default=None, max_length=MAX_ASSIGNEES, description="User IDs to assign"
     )
     milestone_id: int | None = Field(
         default=None, description="Milestone ID"
@@ -127,19 +124,19 @@ class UpdateIssueInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str | None = Field(
-        default=None, min_length=1, max_length=500, description="Issue title"
+        default=None, min_length=1, max_length=MAX_TITLE_LENGTH, description="Issue title"
     )
     description: str | None = Field(
-        default=None, max_length=50000, description="Issue description (Markdown)"
+        default=None, max_length=MAX_DESCRIPTION_LENGTH, description="Issue description (Markdown)"
     )
     labels: str | None = Field(
-        default=None, max_length=1000, description="Comma-separated label names"
+        default=None, max_length=MAX_LABELS_LENGTH, description="Comma-separated label names"
     )
     state_event: str | None = Field(
         default=None, description="State transition: close or reopen"
     )
     assignee_ids: list[int] | None = Field(
-        default=None, max_length=10, description="User IDs to assign"
+        default=None, max_length=MAX_ASSIGNEES, description="User IDs to assign"
     )
     milestone_id: int | None = Field(
         default=None, description="Milestone ID"
@@ -162,25 +159,25 @@ class CreateMergeRequestInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     source_branch: str = Field(
-        ..., min_length=1, max_length=255, description="Source branch name"
+        ..., min_length=1, max_length=MAX_BRANCH_LENGTH, description="Source branch name"
     )
     target_branch: str = Field(
-        ..., min_length=1, max_length=255, description="Target branch name"
+        ..., min_length=1, max_length=MAX_BRANCH_LENGTH, description="Target branch name"
     )
     title: str = Field(
-        ..., min_length=1, max_length=500, description="MR title"
+        ..., min_length=1, max_length=MAX_TITLE_LENGTH, description="MR title"
     )
     description: str | None = Field(
-        default=None, max_length=50000, description="MR description (Markdown)"
+        default=None, max_length=MAX_DESCRIPTION_LENGTH, description="MR description (Markdown)"
     )
     labels: str | None = Field(
-        default=None, max_length=1000, description="Comma-separated label names"
+        default=None, max_length=MAX_LABELS_LENGTH, description="Comma-separated label names"
     )
     assignee_ids: list[int] | None = Field(
-        default=None, max_length=10, description="User IDs to assign"
+        default=None, max_length=MAX_ASSIGNEES, description="User IDs to assign"
     )
     reviewer_ids: list[int] | None = Field(
-        default=None, max_length=10, description="User IDs to review"
+        default=None, max_length=MAX_ASSIGNEES, description="User IDs to review"
     )
     milestone_id: int | None = Field(
         default=None, description="Milestone ID"
@@ -196,28 +193,28 @@ class UpdateMergeRequestInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str | None = Field(
-        default=None, min_length=1, max_length=500, description="MR title"
+        default=None, min_length=1, max_length=MAX_TITLE_LENGTH, description="MR title"
     )
     description: str | None = Field(
-        default=None, max_length=50000, description="MR description (Markdown)"
+        default=None, max_length=MAX_DESCRIPTION_LENGTH, description="MR description (Markdown)"
     )
     labels: str | None = Field(
-        default=None, max_length=1000, description="Comma-separated label names"
+        default=None, max_length=MAX_LABELS_LENGTH, description="Comma-separated label names"
     )
     state_event: str | None = Field(
         default=None, description="State transition: close or reopen"
     )
     assignee_ids: list[int] | None = Field(
-        default=None, max_length=10, description="User IDs to assign"
+        default=None, max_length=MAX_ASSIGNEES, description="User IDs to assign"
     )
     reviewer_ids: list[int] | None = Field(
-        default=None, max_length=10, description="User IDs to review"
+        default=None, max_length=MAX_ASSIGNEES, description="User IDs to review"
     )
     milestone_id: int | None = Field(
         default=None, description="Milestone ID"
     )
     target_branch: str | None = Field(
-        default=None, min_length=1, max_length=255, description="Target branch"
+        default=None, min_length=1, max_length=MAX_BRANCH_LENGTH, description="Target branch"
     )
     remove_source_branch: bool | None = Field(
         default=None, description="Remove source branch after merge"

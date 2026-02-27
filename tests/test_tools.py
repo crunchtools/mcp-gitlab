@@ -236,9 +236,6 @@ class TestConfigSafety:
             del os.environ["SSL_CERT_FILE"]
 
 
-# ──────────────────────────────────────────────────────────────
-# Helper to build mock httpx responses
-# ──────────────────────────────────────────────────────────────
 
 
 def _mock_response(
@@ -285,11 +282,9 @@ def _patch_client(mock_response: httpx.Response):
     import mcp_gitlab_crunchtools.client as client_mod
     import mcp_gitlab_crunchtools.config as config_mod
 
-    # Reset singletons so each test gets a fresh client
     client_mod._client = None
     config_mod._config = None
 
-    # Ensure env has a token for Config()
     os.environ.setdefault("GITLAB_TOKEN", "glpat-test-mock-token")
 
     mock_http = AsyncMock(spec=httpx.AsyncClient)
@@ -300,9 +295,6 @@ def _patch_client(mock_response: httpx.Response):
     )
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Pipelines
-# ──────────────────────────────────────────────────────────────
 
 
 class TestPipelineTools:
@@ -483,9 +475,6 @@ class TestJobTools:
         assert result["id"] == 500
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Projects, Issues, MRs, Search
-# ──────────────────────────────────────────────────────────────
 
 
 class TestProjectTools:
@@ -531,7 +520,6 @@ class TestProjectTools:
 
         with _patch_client(resp) as mock_client:
             result = await get_project(project_id="group/my-project")
-            # Verify the URL was properly encoded
             call_args = mock_client.return_value.request.call_args
             assert "group%2Fmy-project" in call_args.kwargs.get("url", "")
 
@@ -673,9 +661,6 @@ class TestSearchTools:
         assert result["items"][0]["name"] == "auth-service"
 
 
-# ──────────────────────────────────────────────────────────────
-# Client error handling tests
-# ──────────────────────────────────────────────────────────────
 
 
 class TestClientErrorHandling:
@@ -737,9 +722,6 @@ class TestClientErrorHandling:
         assert result == {"status": "deleted"}
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Files
-# ──────────────────────────────────────────────────────────────
 
 
 class TestFileTools:
@@ -823,9 +805,6 @@ class TestFileTools:
         assert result["file_path"] == "README.md"
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Branches
-# ──────────────────────────────────────────────────────────────
 
 
 class TestBranchTools:
@@ -882,9 +861,6 @@ class TestBranchTools:
         assert len(result["diffs"]) == 1
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Labels
-# ──────────────────────────────────────────────────────────────
 
 
 class TestLabelTools:
@@ -954,9 +930,6 @@ class TestLabelTools:
         assert result["status"] == "deleted"
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Users
-# ──────────────────────────────────────────────────────────────
 
 
 class TestUserTools:
@@ -1009,9 +982,6 @@ class TestUserTools:
         assert result["id"] == 42
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Releases
-# ──────────────────────────────────────────────────────────────
 
 
 class TestReleaseTools:
@@ -1072,9 +1042,6 @@ class TestReleaseTools:
         assert result["tag_name"] == "v2.0.0"
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Milestones
-# ──────────────────────────────────────────────────────────────
 
 
 class TestMilestoneTools:
@@ -1135,9 +1102,6 @@ class TestMilestoneTools:
         assert result["state"] == "closed"
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — MR Discussions
-# ──────────────────────────────────────────────────────────────
 
 
 class TestMRDiscussionTools:
@@ -1194,9 +1158,6 @@ class TestMRDiscussionTools:
         assert result["id"] == "disc3"
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Wiki
-# ──────────────────────────────────────────────────────────────
 
 
 class TestWikiTools:
@@ -1255,9 +1216,6 @@ class TestWikiTools:
         assert result["slug"] == "new-page"
 
 
-# ──────────────────────────────────────────────────────────────
-# Mocked API tests — Snippets
-# ──────────────────────────────────────────────────────────────
 
 
 class TestSnippetTools:

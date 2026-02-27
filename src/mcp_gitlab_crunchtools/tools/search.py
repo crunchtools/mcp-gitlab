@@ -70,7 +70,6 @@ async def search_project(
     if not search or not search.strip():
         raise ValidationError("Search query must not be empty")
 
-    # Project search has a subset of scopes
     project_scopes = SEARCH_SCOPES - {"projects", "snippet_titles", "users"}
     if scope not in project_scopes:
         allowed = ", ".join(sorted(project_scopes))
