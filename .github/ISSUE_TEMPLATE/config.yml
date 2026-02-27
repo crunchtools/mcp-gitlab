@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security Vulnerability
+    url: https://github.com/crunchtools/mcp-gitlab/blob/main/SECURITY.md
+    about: Report security vulnerabilities via the process in SECURITY.md
+  - name: GitLab API Documentation
+    url: https://docs.gitlab.com/api/rest/
+    about: Check the GitLab REST API docs for endpoint behavior questions
