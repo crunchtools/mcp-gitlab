@@ -56,6 +56,21 @@ class Config:
             )
 
         self._base_url = gitlab_url
+
+        # SSL verification: supports SSL_CERT_FILE for custom CA bundles
+        # and GITLAB_SSL_VERIFY=false as an escape hatch for self-signed certs
+        ssl_verify_env = os.environ.get("GITLAB_SSL_VERIFY", "true").lower()
+        ssl_cert_file = os.environ.get("SSL_CERT_FILE")
+
+        if ssl_verify_env in ("false", "0", "no"):
+            self._ssl_verify: bool | str = False
+            logger.warning("SSL verification disabled via GITLAB_SSL_VERIFY")
+        elif ssl_cert_file:
+            self._ssl_verify = ssl_cert_file
+            logger.info("Using custom CA bundle: %s", ssl_cert_file)
+        else:
+            self._ssl_verify = True
+
         logger.info("Configuration loaded successfully (GitLab: %s)", self._base_url)
 
     @property
@@ -78,6 +93,14 @@ class Config:
     def gitlab_url(self) -> str:
         """GitLab instance base URL."""
         return self._base_url
+
+    @property
+    def ssl_verify(self) -> bool | str:
+        """SSL verification setting.
+
+        Returns True, False, or a path to a CA bundle file.
+        """
+        return self._ssl_verify
 
     def __repr__(self) -> str:
         """Safe repr that never exposes the token."""

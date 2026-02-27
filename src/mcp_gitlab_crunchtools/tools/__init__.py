@@ -21,7 +21,19 @@ from .merge_requests import (
     list_mr_notes,
     update_merge_request,
 )
-from .pipelines import get_job_log, get_pipeline, list_pipeline_jobs, list_pipelines
+from .pipelines import (
+    cancel_job,
+    cancel_pipeline,
+    create_pipeline,
+    delete_job,
+    delete_pipeline,
+    get_job_log,
+    get_pipeline,
+    list_pipeline_jobs,
+    list_pipelines,
+    retry_job,
+    retry_pipeline,
+)
 from .projects import (
     get_project,
     get_project_branch,
@@ -60,8 +72,15 @@ __all__ = [
     # Pipelines
     "list_pipelines",
     "get_pipeline",
+    "create_pipeline",
+    "retry_pipeline",
+    "cancel_pipeline",
+    "delete_pipeline",
     "list_pipeline_jobs",
     "get_job_log",
+    "retry_job",
+    "cancel_job",
+    "delete_job",
     # Search
     "search_global",
     "search_project",

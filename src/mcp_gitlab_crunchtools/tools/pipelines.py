@@ -1,6 +1,6 @@
 """Pipeline management tools.
 
-Tools for listing and inspecting GitLab CI/CD pipelines and jobs.
+Tools for listing, inspecting, and managing GitLab CI/CD pipelines and jobs.
 """
 
 from typing import Any
@@ -121,3 +121,131 @@ async def get_job_log(
     client = get_client()
     encoded_id = encode_project_id(project_id)
     return await client.get(f"/projects/{encoded_id}/jobs/{job_id}/trace")
+
+
+async def create_pipeline(
+    project_id: str,
+    ref: str = "main",
+) -> dict[str, Any]:
+    """Create (trigger) a new pipeline.
+
+    Args:
+        project_id: Project ID or path
+        ref: Branch or tag name to run the pipeline for (default: main)
+
+    Returns:
+        Created pipeline details
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+    return await client.post(
+        f"/projects/{encoded_id}/pipeline", json_data={"ref": ref}
+    )
+
+
+async def retry_pipeline(
+    project_id: str,
+    pipeline_id: int,
+) -> dict[str, Any]:
+    """Retry all failed jobs in a pipeline.
+
+    Args:
+        project_id: Project ID or path
+        pipeline_id: Pipeline ID
+
+    Returns:
+        Retried pipeline details
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+    return await client.post(f"/projects/{encoded_id}/pipelines/{pipeline_id}/retry")
+
+
+async def cancel_pipeline(
+    project_id: str,
+    pipeline_id: int,
+) -> dict[str, Any]:
+    """Cancel a running pipeline.
+
+    Args:
+        project_id: Project ID or path
+        pipeline_id: Pipeline ID
+
+    Returns:
+        Canceled pipeline details
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+    return await client.post(f"/projects/{encoded_id}/pipelines/{pipeline_id}/cancel")
+
+
+async def delete_pipeline(
+    project_id: str,
+    pipeline_id: int,
+) -> dict[str, Any]:
+    """Delete a pipeline and all its jobs.
+
+    Args:
+        project_id: Project ID or path
+        pipeline_id: Pipeline ID
+
+    Returns:
+        Confirmation of deletion
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+    return await client.delete(f"/projects/{encoded_id}/pipelines/{pipeline_id}")
+
+
+async def retry_job(
+    project_id: str,
+    job_id: int,
+) -> dict[str, Any]:
+    """Retry a specific failed job.
+
+    Args:
+        project_id: Project ID or path
+        job_id: Job ID
+
+    Returns:
+        Retried job details
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+    return await client.post(f"/projects/{encoded_id}/jobs/{job_id}/retry")
+
+
+async def cancel_job(
+    project_id: str,
+    job_id: int,
+) -> dict[str, Any]:
+    """Cancel a running job.
+
+    Args:
+        project_id: Project ID or path
+        job_id: Job ID
+
+    Returns:
+        Canceled job details
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+    return await client.post(f"/projects/{encoded_id}/jobs/{job_id}/cancel")
+
+
+async def delete_job(
+    project_id: str,
+    job_id: int,
+) -> dict[str, Any]:
+    """Delete a job's artifacts and trace log.
+
+    Args:
+        project_id: Project ID or path
+        job_id: Job ID
+
+    Returns:
+        Erased job details
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+    return await client.post(f"/projects/{encoded_id}/jobs/{job_id}/erase")

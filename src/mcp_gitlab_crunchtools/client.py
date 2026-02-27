@@ -53,7 +53,7 @@ class GitLabClient:
                     "Content-Type": "application/json",
                 },
                 timeout=httpx.Timeout(REQUEST_TIMEOUT),
-                verify=True,
+                verify=self._config.ssl_verify,
             )
         return self._client
 
@@ -110,6 +110,10 @@ class GitLabClient:
         # Handle error responses before parsing
         if not response.is_success:
             self._handle_error_response(response)
+
+        # Handle 204 No Content (e.g., DELETE responses)
+        if response.status_code == 204:
+            return {"status": "deleted"}
 
         # Some endpoints return plain text (e.g., job trace)
         content_type = response.headers.get("content-type", "")
@@ -174,9 +178,7 @@ class GitLabClient:
             data = response.json()
             if isinstance(data, dict):
                 raw_msg = data.get("message", data.get("error"))
-                if isinstance(raw_msg, dict):
-                    error_msg = str(raw_msg)
-                elif raw_msg is not None:
+                if isinstance(raw_msg, (dict, str, int, float)):
                     error_msg = str(raw_msg)
             else:
                 error_msg = str(data)

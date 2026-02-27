@@ -9,16 +9,21 @@ from typing import Any
 from fastmcp import FastMCP
 
 from .tools import (
+    # Pipelines
+    cancel_job,
+    cancel_pipeline,
     # Issues
     create_issue,
     create_issue_note,
     # Merge Requests
     create_merge_request,
     create_mr_note,
+    create_pipeline,
+    delete_job,
+    delete_pipeline,
     # Groups
     get_group,
     get_issue,
-    # Pipelines
     get_job_log,
     get_merge_request,
     get_mr_changes,
@@ -26,7 +31,6 @@ from .tools import (
     # Projects
     get_project,
     get_project_branch,
-    # Groups
     list_group_projects,
     list_groups,
     list_issue_notes,
@@ -38,10 +42,11 @@ from .tools import (
     list_project_branches,
     list_project_commits,
     list_projects,
+    retry_job,
+    retry_pipeline,
     # Search
     search_global,
     search_project,
-    # Issues
     update_issue,
     update_merge_request,
 )
@@ -813,6 +818,125 @@ async def get_job_log_tool(
         Dictionary with job log content as plain text
     """
     return await get_job_log(project_id=project_id, job_id=job_id)
+
+
+@mcp.tool()
+async def create_pipeline_tool(
+    project_id: str,
+    ref: str = "main",
+) -> dict[str, Any]:
+    """Create (trigger) a new CI/CD pipeline.
+
+    Args:
+        project_id: Project ID or path
+        ref: Branch or tag name to run the pipeline for (default: main)
+
+    Returns:
+        Created pipeline details including ID and status
+    """
+    return await create_pipeline(project_id=project_id, ref=ref)
+
+
+@mcp.tool()
+async def retry_pipeline_tool(
+    project_id: str,
+    pipeline_id: int,
+) -> dict[str, Any]:
+    """Retry all failed jobs in a CI/CD pipeline.
+
+    Args:
+        project_id: Project ID or path
+        pipeline_id: Pipeline ID
+
+    Returns:
+        Retried pipeline details
+    """
+    return await retry_pipeline(project_id=project_id, pipeline_id=pipeline_id)
+
+
+@mcp.tool()
+async def cancel_pipeline_tool(
+    project_id: str,
+    pipeline_id: int,
+) -> dict[str, Any]:
+    """Cancel a running CI/CD pipeline.
+
+    Args:
+        project_id: Project ID or path
+        pipeline_id: Pipeline ID
+
+    Returns:
+        Canceled pipeline details
+    """
+    return await cancel_pipeline(project_id=project_id, pipeline_id=pipeline_id)
+
+
+@mcp.tool()
+async def delete_pipeline_tool(
+    project_id: str,
+    pipeline_id: int,
+) -> dict[str, Any]:
+    """Delete a CI/CD pipeline and all its jobs permanently.
+
+    Args:
+        project_id: Project ID or path
+        pipeline_id: Pipeline ID
+
+    Returns:
+        Confirmation of deletion
+    """
+    return await delete_pipeline(project_id=project_id, pipeline_id=pipeline_id)
+
+
+@mcp.tool()
+async def retry_job_tool(
+    project_id: str,
+    job_id: int,
+) -> dict[str, Any]:
+    """Retry a specific failed CI/CD job.
+
+    Args:
+        project_id: Project ID or path
+        job_id: Job ID
+
+    Returns:
+        Retried job details
+    """
+    return await retry_job(project_id=project_id, job_id=job_id)
+
+
+@mcp.tool()
+async def cancel_job_tool(
+    project_id: str,
+    job_id: int,
+) -> dict[str, Any]:
+    """Cancel a running CI/CD job.
+
+    Args:
+        project_id: Project ID or path
+        job_id: Job ID
+
+    Returns:
+        Canceled job details
+    """
+    return await cancel_job(project_id=project_id, job_id=job_id)
+
+
+@mcp.tool()
+async def delete_job_tool(
+    project_id: str,
+    job_id: int,
+) -> dict[str, Any]:
+    """Delete a CI/CD job's artifacts and trace log.
+
+    Args:
+        project_id: Project ID or path
+        job_id: Job ID
+
+    Returns:
+        Erased job details
+    """
+    return await delete_job(project_id=project_id, job_id=job_id)
 
 
 # ──────────────────────────────────────────────────────────────
