@@ -216,6 +216,6 @@ Before each release:
 
 ## 6. Reporting Security Issues
 
-Please report security issues to security@crunchtools.com or open a private security advisory on GitHub.
+Report security vulnerabilities using [GitHub's private security advisory](https://github.com/crunchtools/mcp-gitlab/security/advisories/new). This creates a private channel visible only to maintainers.
 
 Do NOT open public issues for security vulnerabilities.
