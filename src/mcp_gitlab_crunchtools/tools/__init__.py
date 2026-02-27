@@ -3,6 +3,8 @@
 This package contains all the MCP tool implementations for GitLab operations.
 """
 
+from .branches import compare_branches, create_branch, delete_branch
+from .files import create_file, get_file, list_repository_tree, update_file
 from .groups import get_group, list_group_projects, list_groups
 from .issues import (
     create_issue,
@@ -12,15 +14,19 @@ from .issues import (
     list_issues,
     update_issue,
 )
+from .labels import create_label, delete_label, list_labels, update_label
 from .merge_requests import (
     create_merge_request,
+    create_mr_discussion,
     create_mr_note,
     get_merge_request,
     get_mr_changes,
     list_merge_requests,
+    list_mr_discussions,
     list_mr_notes,
     update_merge_request,
 )
+from .milestones import create_milestone, list_milestones, update_milestone
 from .pipelines import (
     cancel_job,
     cancel_pipeline,
@@ -41,7 +47,11 @@ from .projects import (
     list_project_commits,
     list_projects,
 )
+from .releases import create_release, get_release, list_releases
 from .search import search_global, search_project
+from .snippets import create_snippet, list_snippets
+from .users import get_current_user, get_user, list_users
+from .wiki import create_wiki_page, get_wiki_page, list_wiki_pages
 
 __all__ = [
     # Projects
@@ -62,6 +72,8 @@ __all__ = [
     "list_mr_notes",
     "create_mr_note",
     "get_mr_changes",
+    "list_mr_discussions",
+    "create_mr_discussion",
     # Issues
     "list_issues",
     "get_issue",
@@ -81,6 +93,39 @@ __all__ = [
     "retry_job",
     "cancel_job",
     "delete_job",
+    # Files
+    "list_repository_tree",
+    "get_file",
+    "create_file",
+    "update_file",
+    # Branches
+    "create_branch",
+    "delete_branch",
+    "compare_branches",
+    # Labels
+    "list_labels",
+    "create_label",
+    "update_label",
+    "delete_label",
+    # Users
+    "get_current_user",
+    "list_users",
+    "get_user",
+    # Releases
+    "list_releases",
+    "get_release",
+    "create_release",
+    # Milestones
+    "list_milestones",
+    "create_milestone",
+    "update_milestone",
+    # Wiki
+    "list_wiki_pages",
+    "get_wiki_page",
+    "create_wiki_page",
+    # Snippets
+    "list_snippets",
+    "create_snippet",
     # Search
     "search_global",
     "search_project",

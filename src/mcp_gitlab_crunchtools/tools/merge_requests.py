@@ -294,3 +294,59 @@ async def get_mr_changes(
     return await client.get(
         f"/projects/{encoded_id}/merge_requests/{merge_request_iid}/changes"
     )
+
+
+async def list_mr_discussions(
+    project_id: str,
+    merge_request_iid: int,
+    page: int = 1,
+    per_page: int = 20,
+) -> dict[str, Any]:
+    """List discussions (threaded comments) on a merge request.
+
+    Discussions include inline code review comments with position data.
+
+    Args:
+        project_id: Project ID or path
+        merge_request_iid: Merge request internal ID
+        page: Page number
+        per_page: Results per page
+
+    Returns:
+        List of discussions with notes and position info
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+
+    params: dict[str, Any] = {
+        "page": page,
+        "per_page": min(per_page, 100),
+    }
+
+    return await client.get(
+        f"/projects/{encoded_id}/merge_requests/{merge_request_iid}/discussions",
+        params=params,
+    )
+
+
+async def create_mr_discussion(
+    project_id: str,
+    merge_request_iid: int,
+    body: str,
+) -> dict[str, Any]:
+    """Create a new discussion on a merge request.
+
+    Args:
+        project_id: Project ID or path
+        merge_request_iid: Merge request internal ID
+        body: Discussion body (Markdown)
+
+    Returns:
+        Created discussion details
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+    return await client.post(
+        f"/projects/{encoded_id}/merge_requests/{merge_request_iid}/discussions",
+        json_data={"body": body},
+    )

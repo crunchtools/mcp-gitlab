@@ -21,94 +21,19 @@ class TestToolRegistration:
 
     def test_imports(self) -> None:
         """All tool functions should be importable."""
-        from mcp_gitlab_crunchtools.tools import (
-            cancel_job,
-            cancel_pipeline,
-            create_issue,
-            create_issue_note,
-            create_merge_request,
-            create_mr_note,
-            create_pipeline,
-            delete_job,
-            delete_pipeline,
-            get_group,
-            get_issue,
-            get_job_log,
-            get_merge_request,
-            get_mr_changes,
-            get_pipeline,
-            get_project,
-            get_project_branch,
-            list_group_projects,
-            list_groups,
-            list_issue_notes,
-            list_issues,
-            list_merge_requests,
-            list_mr_notes,
-            list_pipeline_jobs,
-            list_pipelines,
-            list_project_branches,
-            list_project_commits,
-            list_projects,
-            retry_job,
-            retry_pipeline,
-            search_global,
-            search_project,
-            update_issue,
-            update_merge_request,
-        )
-
-        # Projects (5)
-        assert callable(list_projects)
-        assert callable(get_project)
-        assert callable(list_project_branches)
-        assert callable(get_project_branch)
-        assert callable(list_project_commits)
-
-        # Groups (3)
-        assert callable(list_groups)
-        assert callable(get_group)
-        assert callable(list_group_projects)
-
-        # Merge Requests (7)
-        assert callable(list_merge_requests)
-        assert callable(get_merge_request)
-        assert callable(create_merge_request)
-        assert callable(update_merge_request)
-        assert callable(list_mr_notes)
-        assert callable(create_mr_note)
-        assert callable(get_mr_changes)
-
-        # Issues (6)
-        assert callable(list_issues)
-        assert callable(get_issue)
-        assert callable(create_issue)
-        assert callable(update_issue)
-        assert callable(list_issue_notes)
-        assert callable(create_issue_note)
-
-        # Pipelines (11)
-        assert callable(list_pipelines)
-        assert callable(get_pipeline)
-        assert callable(create_pipeline)
-        assert callable(retry_pipeline)
-        assert callable(cancel_pipeline)
-        assert callable(delete_pipeline)
-        assert callable(list_pipeline_jobs)
-        assert callable(get_job_log)
-        assert callable(retry_job)
-        assert callable(cancel_job)
-        assert callable(delete_job)
-
-        # Search (2)
-        assert callable(search_global)
-        assert callable(search_project)
-
-    def test_tool_count(self) -> None:
-        """Server should have exactly 34 tools registered."""
         from mcp_gitlab_crunchtools.tools import __all__
 
-        assert len(__all__) == 34
+        import mcp_gitlab_crunchtools.tools as tools_mod
+
+        for name in __all__:
+            func = getattr(tools_mod, name)
+            assert callable(func), f"{name} is not callable"
+
+    def test_tool_count(self) -> None:
+        """Server should have exactly 61 tools registered."""
+        from mcp_gitlab_crunchtools.tools import __all__
+
+        assert len(__all__) == 61
 
 
 class TestErrorSafety:
