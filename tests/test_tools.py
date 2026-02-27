@@ -735,3 +735,569 @@ class TestClientErrorHandling:
             result = await delete_pipeline(project_id="1", pipeline_id=100)
 
         assert result == {"status": "deleted"}
+
+
+# ──────────────────────────────────────────────────────────────
+# Mocked API tests — Files
+# ──────────────────────────────────────────────────────────────
+
+
+class TestFileTools:
+    """Tests for file tools with mocked API responses."""
+
+    @pytest.mark.asyncio
+    async def test_list_repository_tree(self) -> None:
+        """list_repository_tree should return tree entries."""
+        from mcp_gitlab_crunchtools.tools import list_repository_tree
+
+        resp = _mock_response(
+            json_data=[
+                {"id": "abc", "name": "src", "type": "tree", "path": "src"},
+                {"id": "def", "name": "README.md", "type": "blob", "path": "README.md"},
+            ],
+            headers={"x-total": "2"},
+        )
+
+        with _patch_client(resp):
+            result = await list_repository_tree(project_id="1")
+
+        assert len(result["items"]) == 2
+        assert result["items"][0]["type"] == "tree"
+        assert result["items"][1]["type"] == "blob"
+
+    @pytest.mark.asyncio
+    async def test_get_file(self) -> None:
+        """get_file should return file metadata and content."""
+        from mcp_gitlab_crunchtools.tools import get_file
+
+        resp = _mock_response(
+            json_data={
+                "file_name": "README.md",
+                "file_path": "README.md",
+                "size": 1024,
+                "encoding": "base64",
+                "content": "IyBIZWxsbw==",
+                "ref": "main",
+            },
+        )
+
+        with _patch_client(resp):
+            result = await get_file(project_id="1", file_path="README.md")
+
+        assert result["file_name"] == "README.md"
+        assert result["content"] == "IyBIZWxsbw=="
+
+    @pytest.mark.asyncio
+    async def test_create_file(self) -> None:
+        """create_file should POST and return file metadata."""
+        from mcp_gitlab_crunchtools.tools import create_file
+
+        resp = _mock_response(
+            status_code=201,
+            json_data={"file_path": "new_file.py", "branch": "main"},
+        )
+
+        with _patch_client(resp):
+            result = await create_file(
+                project_id="1", file_path="new_file.py", branch="main",
+                content="print('hello')", commit_message="Add new file",
+            )
+
+        assert result["file_path"] == "new_file.py"
+
+    @pytest.mark.asyncio
+    async def test_update_file(self) -> None:
+        """update_file should PUT and return file metadata."""
+        from mcp_gitlab_crunchtools.tools import update_file
+
+        resp = _mock_response(
+            json_data={"file_path": "README.md", "branch": "main"},
+        )
+
+        with _patch_client(resp):
+            result = await update_file(
+                project_id="1", file_path="README.md", branch="main",
+                content="# Updated", commit_message="Update readme",
+            )
+
+        assert result["file_path"] == "README.md"
+
+
+# ──────────────────────────────────────────────────────────────
+# Mocked API tests — Branches
+# ──────────────────────────────────────────────────────────────
+
+
+class TestBranchTools:
+    """Tests for branch tools with mocked API responses."""
+
+    @pytest.mark.asyncio
+    async def test_create_branch(self) -> None:
+        """create_branch should POST and return branch details."""
+        from mcp_gitlab_crunchtools.tools import create_branch
+
+        resp = _mock_response(
+            status_code=201,
+            json_data={"name": "feature/auth", "merged": False, "protected": False},
+        )
+
+        with _patch_client(resp):
+            result = await create_branch(
+                project_id="1", branch="feature/auth", ref="main",
+            )
+
+        assert result["name"] == "feature/auth"
+
+    @pytest.mark.asyncio
+    async def test_delete_branch(self) -> None:
+        """delete_branch should handle 204 No Content."""
+        from mcp_gitlab_crunchtools.tools import delete_branch
+
+        resp = _mock_response(status_code=204, text="", content_type="text/plain")
+
+        with _patch_client(resp):
+            result = await delete_branch(project_id="1", branch="feature/old")
+
+        assert result["status"] == "deleted"
+
+    @pytest.mark.asyncio
+    async def test_compare_branches(self) -> None:
+        """compare_branches should return diff data."""
+        from mcp_gitlab_crunchtools.tools import compare_branches
+
+        resp = _mock_response(
+            json_data={
+                "commits": [{"id": "abc123", "title": "Fix bug"}],
+                "diffs": [{"old_path": "a.py", "new_path": "a.py"}],
+                "compare_timeout": False,
+            },
+        )
+
+        with _patch_client(resp):
+            result = await compare_branches(
+                project_id="1", from_ref="main", to_ref="feature",
+            )
+
+        assert len(result["commits"]) == 1
+        assert len(result["diffs"]) == 1
+
+
+# ──────────────────────────────────────────────────────────────
+# Mocked API tests — Labels
+# ──────────────────────────────────────────────────────────────
+
+
+class TestLabelTools:
+    """Tests for label tools with mocked API responses."""
+
+    @pytest.mark.asyncio
+    async def test_list_labels(self) -> None:
+        """list_labels should return label list."""
+        from mcp_gitlab_crunchtools.tools import list_labels
+
+        resp = _mock_response(
+            json_data=[
+                {"id": 1, "name": "bug", "color": "#FF0000"},
+                {"id": 2, "name": "feature", "color": "#00FF00"},
+            ],
+            headers={"x-total": "2"},
+        )
+
+        with _patch_client(resp):
+            result = await list_labels(project_id="1")
+
+        assert len(result["items"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_create_label(self) -> None:
+        """create_label should POST and return label."""
+        from mcp_gitlab_crunchtools.tools import create_label
+
+        resp = _mock_response(
+            status_code=201,
+            json_data={"id": 3, "name": "urgent", "color": "#FF0000"},
+        )
+
+        with _patch_client(resp):
+            result = await create_label(
+                project_id="1", name="urgent", color="#FF0000",
+            )
+
+        assert result["name"] == "urgent"
+
+    @pytest.mark.asyncio
+    async def test_update_label(self) -> None:
+        """update_label should PUT and return updated label."""
+        from mcp_gitlab_crunchtools.tools import update_label
+
+        resp = _mock_response(
+            json_data={"id": 3, "name": "critical", "color": "#CC0000"},
+        )
+
+        with _patch_client(resp):
+            result = await update_label(
+                project_id="1", label_id=3, new_name="critical",
+            )
+
+        assert result["name"] == "critical"
+
+    @pytest.mark.asyncio
+    async def test_delete_label(self) -> None:
+        """delete_label should handle 204 No Content."""
+        from mcp_gitlab_crunchtools.tools import delete_label
+
+        resp = _mock_response(status_code=204, text="", content_type="text/plain")
+
+        with _patch_client(resp):
+            result = await delete_label(project_id="1", label_id=3)
+
+        assert result["status"] == "deleted"
+
+
+# ──────────────────────────────────────────────────────────────
+# Mocked API tests — Users
+# ──────────────────────────────────────────────────────────────
+
+
+class TestUserTools:
+    """Tests for user tools with mocked API responses."""
+
+    @pytest.mark.asyncio
+    async def test_get_current_user(self) -> None:
+        """get_current_user should return authenticated user."""
+        from mcp_gitlab_crunchtools.tools import get_current_user
+
+        resp = _mock_response(
+            json_data={"id": 42, "username": "smccarty", "name": "Scott McCarty"},
+        )
+
+        with _patch_client(resp):
+            result = await get_current_user()
+
+        assert result["username"] == "smccarty"
+
+    @pytest.mark.asyncio
+    async def test_list_users(self) -> None:
+        """list_users should return user list."""
+        from mcp_gitlab_crunchtools.tools import list_users
+
+        resp = _mock_response(
+            json_data=[
+                {"id": 1, "username": "alice", "state": "active"},
+                {"id": 2, "username": "bob", "state": "active"},
+            ],
+            headers={"x-total": "2"},
+        )
+
+        with _patch_client(resp):
+            result = await list_users(search="a")
+
+        assert len(result["items"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_get_user(self) -> None:
+        """get_user should return user details."""
+        from mcp_gitlab_crunchtools.tools import get_user
+
+        resp = _mock_response(
+            json_data={"id": 42, "username": "smccarty", "state": "active"},
+        )
+
+        with _patch_client(resp):
+            result = await get_user(user_id=42)
+
+        assert result["id"] == 42
+
+
+# ──────────────────────────────────────────────────────────────
+# Mocked API tests — Releases
+# ──────────────────────────────────────────────────────────────
+
+
+class TestReleaseTools:
+    """Tests for release tools with mocked API responses."""
+
+    @pytest.mark.asyncio
+    async def test_list_releases(self) -> None:
+        """list_releases should return release list."""
+        from mcp_gitlab_crunchtools.tools import list_releases
+
+        resp = _mock_response(
+            json_data=[
+                {"tag_name": "v1.0.0", "name": "v1.0.0"},
+                {"tag_name": "v0.9.0", "name": "v0.9.0"},
+            ],
+            headers={"x-total": "2"},
+        )
+
+        with _patch_client(resp):
+            result = await list_releases(project_id="1")
+
+        assert len(result["items"]) == 2
+        assert result["items"][0]["tag_name"] == "v1.0.0"
+
+    @pytest.mark.asyncio
+    async def test_get_release(self) -> None:
+        """get_release should return release details."""
+        from mcp_gitlab_crunchtools.tools import get_release
+
+        resp = _mock_response(
+            json_data={
+                "tag_name": "v1.0.0", "name": "v1.0.0",
+                "description": "First release",
+            },
+        )
+
+        with _patch_client(resp):
+            result = await get_release(project_id="1", tag_name="v1.0.0")
+
+        assert result["description"] == "First release"
+
+    @pytest.mark.asyncio
+    async def test_create_release(self) -> None:
+        """create_release should POST and return release."""
+        from mcp_gitlab_crunchtools.tools import create_release
+
+        resp = _mock_response(
+            status_code=201,
+            json_data={"tag_name": "v2.0.0", "name": "v2.0.0"},
+        )
+
+        with _patch_client(resp):
+            result = await create_release(
+                project_id="1", tag_name="v2.0.0", name="v2.0.0",
+                description="Major release", ref="main",
+            )
+
+        assert result["tag_name"] == "v2.0.0"
+
+
+# ──────────────────────────────────────────────────────────────
+# Mocked API tests — Milestones
+# ──────────────────────────────────────────────────────────────
+
+
+class TestMilestoneTools:
+    """Tests for milestone tools with mocked API responses."""
+
+    @pytest.mark.asyncio
+    async def test_list_milestones(self) -> None:
+        """list_milestones should return milestone list."""
+        from mcp_gitlab_crunchtools.tools import list_milestones
+
+        resp = _mock_response(
+            json_data=[
+                {"id": 1, "title": "Sprint 1", "state": "active"},
+                {"id": 2, "title": "Sprint 2", "state": "active"},
+            ],
+            headers={"x-total": "2"},
+        )
+
+        with _patch_client(resp):
+            result = await list_milestones(project_id="1")
+
+        assert len(result["items"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_create_milestone(self) -> None:
+        """create_milestone should POST and return milestone."""
+        from mcp_gitlab_crunchtools.tools import create_milestone
+
+        resp = _mock_response(
+            status_code=201,
+            json_data={
+                "id": 3, "title": "Sprint 3", "state": "active",
+                "due_date": "2026-03-15",
+            },
+        )
+
+        with _patch_client(resp):
+            result = await create_milestone(
+                project_id="1", title="Sprint 3", due_date="2026-03-15",
+            )
+
+        assert result["title"] == "Sprint 3"
+
+    @pytest.mark.asyncio
+    async def test_update_milestone(self) -> None:
+        """update_milestone should PUT and return updated milestone."""
+        from mcp_gitlab_crunchtools.tools import update_milestone
+
+        resp = _mock_response(
+            json_data={"id": 1, "title": "Sprint 1", "state": "closed"},
+        )
+
+        with _patch_client(resp):
+            result = await update_milestone(
+                project_id="1", milestone_id=1, state_event="close",
+            )
+
+        assert result["state"] == "closed"
+
+
+# ──────────────────────────────────────────────────────────────
+# Mocked API tests — MR Discussions
+# ──────────────────────────────────────────────────────────────
+
+
+class TestMRDiscussionTools:
+    """Tests for MR discussion tools with mocked API responses."""
+
+    @pytest.mark.asyncio
+    async def test_list_mr_discussions(self) -> None:
+        """list_mr_discussions should return threaded discussions."""
+        from mcp_gitlab_crunchtools.tools import list_mr_discussions
+
+        resp = _mock_response(
+            json_data=[
+                {
+                    "id": "disc1",
+                    "notes": [
+                        {"id": 100, "body": "Looks good", "author": {"username": "alice"}},
+                    ],
+                },
+                {
+                    "id": "disc2",
+                    "notes": [
+                        {"id": 101, "body": "Needs fix on line 42", "author": {"username": "bob"}},
+                        {"id": 102, "body": "Fixed", "author": {"username": "charlie"}},
+                    ],
+                },
+            ],
+            headers={"x-total": "2"},
+        )
+
+        with _patch_client(resp):
+            result = await list_mr_discussions(project_id="1", merge_request_iid=5)
+
+        assert len(result["items"]) == 2
+        assert len(result["items"][1]["notes"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_create_mr_discussion(self) -> None:
+        """create_mr_discussion should POST and return discussion."""
+        from mcp_gitlab_crunchtools.tools import create_mr_discussion
+
+        resp = _mock_response(
+            status_code=201,
+            json_data={
+                "id": "disc3",
+                "notes": [{"id": 200, "body": "New thread"}],
+            },
+        )
+
+        with _patch_client(resp):
+            result = await create_mr_discussion(
+                project_id="1", merge_request_iid=5, body="New thread",
+            )
+
+        assert result["id"] == "disc3"
+
+
+# ──────────────────────────────────────────────────────────────
+# Mocked API tests — Wiki
+# ──────────────────────────────────────────────────────────────
+
+
+class TestWikiTools:
+    """Tests for wiki tools with mocked API responses."""
+
+    @pytest.mark.asyncio
+    async def test_list_wiki_pages(self) -> None:
+        """list_wiki_pages should return page list."""
+        from mcp_gitlab_crunchtools.tools import list_wiki_pages
+
+        resp = _mock_response(
+            json_data=[
+                {"slug": "home", "title": "Home"},
+                {"slug": "getting-started", "title": "Getting Started"},
+            ],
+            headers={"x-total": "2"},
+        )
+
+        with _patch_client(resp):
+            result = await list_wiki_pages(project_id="1")
+
+        assert len(result["items"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_get_wiki_page(self) -> None:
+        """get_wiki_page should return page with content."""
+        from mcp_gitlab_crunchtools.tools import get_wiki_page
+
+        resp = _mock_response(
+            json_data={
+                "slug": "home", "title": "Home",
+                "content": "# Welcome", "format": "markdown",
+            },
+        )
+
+        with _patch_client(resp):
+            result = await get_wiki_page(project_id="1", slug="home")
+
+        assert result["content"] == "# Welcome"
+
+    @pytest.mark.asyncio
+    async def test_create_wiki_page(self) -> None:
+        """create_wiki_page should POST and return page."""
+        from mcp_gitlab_crunchtools.tools import create_wiki_page
+
+        resp = _mock_response(
+            status_code=201,
+            json_data={"slug": "new-page", "title": "New Page"},
+        )
+
+        with _patch_client(resp):
+            result = await create_wiki_page(
+                project_id="1", title="New Page", content="# New",
+            )
+
+        assert result["slug"] == "new-page"
+
+
+# ──────────────────────────────────────────────────────────────
+# Mocked API tests — Snippets
+# ──────────────────────────────────────────────────────────────
+
+
+class TestSnippetTools:
+    """Tests for snippet tools with mocked API responses."""
+
+    @pytest.mark.asyncio
+    async def test_list_snippets(self) -> None:
+        """list_snippets should return snippet list."""
+        from mcp_gitlab_crunchtools.tools import list_snippets
+
+        resp = _mock_response(
+            json_data=[
+                {"id": 1, "title": "Config example", "visibility": "private"},
+            ],
+            headers={"x-total": "1"},
+        )
+
+        with _patch_client(resp):
+            result = await list_snippets(project_id="1")
+
+        assert len(result["items"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_create_snippet(self) -> None:
+        """create_snippet should POST and return snippet."""
+        from mcp_gitlab_crunchtools.tools import create_snippet
+
+        resp = _mock_response(
+            status_code=201,
+            json_data={
+                "id": 2, "title": "Helper script",
+                "file_name": "helper.py", "visibility": "internal",
+            },
+        )
+
+        with _patch_client(resp):
+            result = await create_snippet(
+                project_id="1", title="Helper script",
+                file_name="helper.py", content="print('hi')",
+                visibility="internal",
+            )
+
+        assert result["title"] == "Helper script"
