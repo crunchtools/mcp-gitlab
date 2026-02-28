@@ -1,6 +1,6 @@
 [project]
 name = "mcp-gitlab-crunchtools"
-version = "0.3.0"
+version = "0.4.0"
 description = "Secure MCP server for GitLab projects, merge requests, issues, and pipelines"
 requires-python = ">=3.10"
 license = "AGPL-3.0-or-later"

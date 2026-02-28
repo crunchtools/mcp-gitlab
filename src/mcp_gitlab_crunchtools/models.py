@@ -17,6 +17,8 @@ SEARCH_SCOPES = frozenset({
     "snippet_titles", "wiki_blobs", "commits", "blobs", "notes", "users",
 })
 
+PROJECT_VISIBILITIES = frozenset({"public", "internal", "private"})
+
 MR_STATES = frozenset({"opened", "closed", "merged", "all"})
 
 ISSUE_STATES = frozenset({"opened", "closed", "all"})
@@ -26,6 +28,7 @@ PIPELINE_STATUSES = frozenset({
     "running", "success", "failed", "canceled", "skipped", "manual", "scheduled",
 })
 
+MAX_PROJECT_NAME_LENGTH = 255
 MAX_TITLE_LENGTH = 500
 MAX_DESCRIPTION_LENGTH = 50000
 MAX_LABELS_LENGTH = 1000
@@ -150,6 +153,37 @@ class UpdateIssueInput(BaseModel):
     def validate_state_event(cls, v: str | None) -> str | None:
         if v is not None and v not in ("close", "reopen"):
             raise ValueError("state_event must be 'close' or 'reopen'")
+        return v
+
+
+class CreateProjectInput(BaseModel):
+    """Validated input for project creation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(
+        ..., min_length=1, max_length=MAX_PROJECT_NAME_LENGTH, description="Project name"
+    )
+    description: str | None = Field(
+        default=None, max_length=MAX_DESCRIPTION_LENGTH, description="Project description"
+    )
+    visibility: str = Field(
+        default="private", description="Visibility level (public, internal, private)"
+    )
+    initialize_with_readme: bool = Field(
+        default=False, description="Initialize with a README file"
+    )
+    namespace_id: int | None = Field(
+        default=None, description="Namespace ID to create the project under (group or user)"
+    )
+
+    @field_validator("visibility")
+    @classmethod
+    def validate_visibility(cls, v: str) -> str:
+        if v not in PROJECT_VISIBILITIES:
+            raise ValueError(
+                f"visibility must be one of: {', '.join(sorted(PROJECT_VISIBILITIES))}"
+            )
         return v
 
 

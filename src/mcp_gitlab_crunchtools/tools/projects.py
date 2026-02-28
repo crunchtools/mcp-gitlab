@@ -7,7 +7,7 @@ branches, and commits.
 from typing import Any
 
 from ..client import get_client
-from ..models import encode_project_id
+from ..models import CreateProjectInput, encode_project_id
 
 
 async def list_projects(
@@ -162,3 +162,63 @@ async def list_project_commits(
         params["path"] = path
 
     return await client.get(f"/projects/{encoded_id}/repository/commits", params=params)
+
+
+async def create_project(
+    name: str,
+    description: str | None = None,
+    visibility: str = "private",
+    initialize_with_readme: bool = False,
+    namespace_id: int | None = None,
+) -> dict[str, Any]:
+    """Create a new project.
+
+    Args:
+        name: Project name
+        description: Project description
+        visibility: Visibility level (public, internal, private)
+        initialize_with_readme: Initialize with a README file
+        namespace_id: Namespace ID to create the project under (group or user)
+
+    Returns:
+        Created project details
+    """
+    validated = CreateProjectInput(
+        name=name,
+        description=description,
+        visibility=visibility,
+        initialize_with_readme=initialize_with_readme,
+        namespace_id=namespace_id,
+    )
+
+    client = get_client()
+
+    data: dict[str, Any] = {
+        "name": validated.name,
+        "visibility": validated.visibility,
+    }
+
+    if validated.description is not None:
+        data["description"] = validated.description
+    if validated.initialize_with_readme:
+        data["initialize_with_readme"] = True
+    if validated.namespace_id is not None:
+        data["namespace_id"] = validated.namespace_id
+
+    return await client.post("/projects", json_data=data)
+
+
+async def delete_project(
+    project_id: str,
+) -> dict[str, Any]:
+    """Delete a project.
+
+    Args:
+        project_id: Project ID (numeric) or URL-encoded path (e.g., "group/project")
+
+    Returns:
+        Confirmation of deletion
+    """
+    client = get_client()
+    encoded_id = encode_project_id(project_id)
+    return await client.delete(f"/projects/{encoded_id}")

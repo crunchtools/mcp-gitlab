@@ -41,6 +41,8 @@ from .pipelines import (
     retry_pipeline,
 )
 from .projects import (
+    create_project,
+    delete_project,
     get_project,
     get_project_branch,
     list_project_branches,
@@ -56,6 +58,8 @@ from .wiki import create_wiki_page, get_wiki_page, list_wiki_pages
 __all__ = [
     "list_projects",
     "get_project",
+    "create_project",
+    "delete_project",
     "list_project_branches",
     "get_project_branch",
     "list_project_commits",

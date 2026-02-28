@@ -29,10 +29,10 @@ class TestToolRegistration:
             assert callable(func), f"{name} is not callable"
 
     def test_tool_count(self) -> None:
-        """Server should have exactly 61 tools registered."""
+        """Server should have exactly 63 tools registered."""
         from mcp_gitlab_crunchtools.tools import __all__
 
-        assert len(__all__) == 61
+        assert len(__all__) == 63
 
 
 class TestErrorSafety:
@@ -539,6 +539,39 @@ class TestProjectTools:
 
         assert len(result["items"]) == 2
         assert result["items"][0]["title"] == "Fix bug"
+
+    @pytest.mark.asyncio
+    async def test_create_project(self) -> None:
+        """create_project should POST and return created project."""
+        from mcp_gitlab_crunchtools.tools import create_project
+
+        resp = _mock_response(
+            status_code=201,
+            json_data={
+                "id": 100, "name": "new-project",
+                "path_with_namespace": "smccarty/new-project",
+                "visibility": "private",
+                "web_url": "https://gitlab.com/smccarty/new-project",
+            },
+        )
+
+        with _patch_client(resp):
+            result = await create_project(name="new-project")
+
+        assert result["name"] == "new-project"
+        assert result["visibility"] == "private"
+
+    @pytest.mark.asyncio
+    async def test_delete_project(self) -> None:
+        """delete_project should handle 204 No Content."""
+        from mcp_gitlab_crunchtools.tools import delete_project
+
+        resp = _mock_response(status_code=204, text="", content_type="text/plain")
+
+        with _patch_client(resp):
+            result = await delete_project(project_id="100")
+
+        assert result["status"] == "deleted"
 
 
 class TestIssueTools:

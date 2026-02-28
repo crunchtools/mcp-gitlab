@@ -2,22 +2,24 @@
 
 > **Spec ID:** 000-baseline
 > **Status:** Implemented
-> **Version:** 0.3.2
+> **Version:** 0.4.0
 
 ## Overview
 
-mcp-gitlab-crunchtools is a secure MCP server for the GitLab REST API v4. It provides 61 tools across 13 categories for managing projects, merge requests, issues, pipelines, files, branches, labels, users, releases, milestones, wiki pages, snippets, and search. Works with any GitLab instance (gitlab.com, self-hosted, corporate).
+mcp-gitlab-crunchtools is a secure MCP server for the GitLab REST API v4. It provides 63 tools across 13 categories for managing projects, merge requests, issues, pipelines, files, branches, labels, users, releases, milestones, wiki pages, snippets, and search. Works with any GitLab instance (gitlab.com, self-hosted, corporate).
 
 ---
 
 ## Tool Inventory
 
-### Projects (5 tools)
+### Projects (7 tools)
 
 | Tool | Method | Endpoint | Description |
 |------|--------|----------|-------------|
 | `list_projects` | GET | `/projects` | List accessible projects |
 | `get_project` | GET | `/projects/:id` | Get project details |
+| `create_project` | POST | `/projects` | Create project |
+| `delete_project` | DELETE | `/projects/:id` | Delete project |
 | `list_project_branches` | GET | `/projects/:id/repository/branches` | List branches |
 | `get_project_branch` | GET | `/projects/:id/repository/branches/:branch` | Get branch details |
 | `list_project_commits` | GET | `/projects/:id/repository/commits` | List commits |
@@ -192,9 +194,9 @@ src/mcp_gitlab_crunchtools/
 ├── config.py            # SecretStr config, SSL, URL validation
 ├── errors.py            # Safe error hierarchy
 ├── models.py            # Pydantic input validation
-├── server.py            # FastMCP tool registrations (61 tools)
+├── server.py            # FastMCP tool registrations (63 tools)
 └── tools/
-    ├── __init__.py      # Re-exports all 61 functions
+    ├── __init__.py      # Re-exports all 63 functions
     ├── branches.py      # create, delete, compare
     ├── files.py         # tree, get, create, update
     ├── groups.py        # list, get, projects
@@ -203,7 +205,7 @@ src/mcp_gitlab_crunchtools/
     ├── merge_requests.py # CRUD + notes + discussions + changes
     ├── milestones.py    # list, create, update
     ├── pipelines.py     # CRUD + jobs
-    ├── projects.py      # list, get, branches, commits
+    ├── projects.py      # list, get, create, delete, branches, commits
     ├── releases.py      # list, get, create
     ├── search.py        # global, project
     ├── snippets.py      # list, create
@@ -220,10 +222,10 @@ src/mcp_gitlab_crunchtools/
 | Registration | 3 | Imports, callable, count |
 | Error safety | 2 | Token sanitization, ID truncation |
 | Config safety | 9 | Token, URL, SSL, localhost |
-| Mocked API | 52 | All tool groups with httpx mocks |
+| Mocked API | 54 | All tool groups with httpx mocks |
 | Input validation | 22 | ID encoding, Pydantic models |
 | Error handling | 4 | 401, 404, 429, 204 |
-| **Total** | **98** | |
+| **Total** | **100** | |
 
 ---
 
@@ -236,3 +238,4 @@ src/mcp_gitlab_crunchtools/
 | 0.3.0 | 2026-02-27 | 27 new tools (files, branches, labels, users, etc.), 61 total |
 | 0.3.1 | 2026-02-27 | Mocked tests for all tool groups, 98 tests |
 | 0.3.2 | 2026-02-27 | Gourmand integration, zero violations, pre-commit hooks |
+| 0.4.0 | 2026-02-27 | Add create_project and delete_project tools, 63 total, 100 tests |

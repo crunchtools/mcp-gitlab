@@ -1,6 +1,6 @@
 # Claude Code Instructions
 
-Secure MCP server for GitLab REST API v4 with 61 tools across 13 categories. Works with any GitLab instance.
+Secure MCP server for GitLab REST API v4 with 63 tools across 13 categories. Works with any GitLab instance.
 
 ## Quick Start
 
@@ -45,11 +45,11 @@ claude mcp add mcp-gitlab-crunchtools \
 | `SSL_CERT_FILE` | No | — | Custom CA bundle for self-hosted instances |
 | `GITLAB_SSL_VERIFY` | No | `true` | Set `false` to disable SSL verification |
 
-## Available Tools (61)
+## Available Tools (63)
 
 | Category | Tools | Operations |
 |----------|------:|------------|
-| Projects | 5 | list, get, branches, branch, commits |
+| Projects | 7 | list, get, create, delete, branches, branch, commits |
 | Groups | 3 | list, get, group projects |
 | Merge Requests | 9 | CRUD, notes, discussions, diff |
 | Issues | 6 | CRUD, notes |
@@ -87,7 +87,7 @@ Search for "authentication" across all projects
 uv sync --all-extras          # Install dependencies
 uv run ruff check src tests   # Lint
 uv run mypy src               # Type check
-uv run pytest -v              # Tests (98 mocked)
+uv run pytest -v              # Tests (100 mocked)
 gourmand --full .              # AI slop detection (zero violations)
 ```
 

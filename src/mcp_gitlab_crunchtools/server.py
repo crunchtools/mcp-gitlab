@@ -22,6 +22,7 @@ from .tools import (
     create_mr_discussion,
     create_mr_note,
     create_pipeline,
+    create_project,
     create_release,
     create_snippet,
     create_wiki_page,
@@ -29,6 +30,7 @@ from .tools import (
     delete_job,
     delete_label,
     delete_pipeline,
+    delete_project,
     get_current_user,
     get_file,
     get_group,
@@ -76,7 +78,7 @@ logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     name="mcp-gitlab-crunchtools",
-    version="0.3.0",
+    version="0.4.0",
     instructions=(
         "Secure MCP server for GitLab projects, merge requests, issues, "
         "pipelines, and search. Works with any GitLab instance."
@@ -211,6 +213,50 @@ async def list_project_commits_tool(
         page=page,
         per_page=per_page,
     )
+
+
+@mcp.tool()
+async def create_project_tool(
+    name: str,
+    description: str | None = None,
+    visibility: str = "private",
+    initialize_with_readme: bool = False,
+    namespace_id: int | None = None,
+) -> dict[str, Any]:
+    """Create a new GitLab project.
+
+    Args:
+        name: Project name
+        description: Project description
+        visibility: Visibility level (public, internal, private)
+        initialize_with_readme: Initialize with a README file (default: false)
+        namespace_id: Namespace ID to create the project under (group or user)
+
+    Returns:
+        Created project details including ID, path, and web URL
+    """
+    return await create_project(
+        name=name,
+        description=description,
+        visibility=visibility,
+        initialize_with_readme=initialize_with_readme,
+        namespace_id=namespace_id,
+    )
+
+
+@mcp.tool()
+async def delete_project_tool(
+    project_id: str,
+) -> dict[str, Any]:
+    """Delete a GitLab project permanently.
+
+    Args:
+        project_id: Project ID (numeric) or path (e.g., "group/project")
+
+    Returns:
+        Confirmation of deletion
+    """
+    return await delete_project(project_id=project_id)
 
 
 
