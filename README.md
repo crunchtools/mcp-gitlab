@@ -263,3 +263,5 @@ Contributions welcome! Please read SECURITY.md before submitting security-relate
 - [FastMCP Documentation](https://gofastmcp.com/)
 - [MCP Specification](https://modelcontextprotocol.io/)
 - [crunchtools.com](https://crunchtools.com)
+
+<!-- mcp-name: io.github.crunchtools/gitlab -->
