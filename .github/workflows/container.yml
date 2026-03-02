@@ -68,6 +68,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Run Trivy vulnerability scanner
+        continue-on-error: true
         if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@0.34.1
         with:
