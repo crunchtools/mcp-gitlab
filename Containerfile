@@ -23,7 +23,10 @@ LABEL name="mcp-gitlab-crunchtools" \
       maintainer="crunchtools.com" \
       url="https://github.com/crunchtools/mcp-gitlab" \
       io.k8s.display-name="MCP GitLab CrunchTools" \
-      io.openshift.tags="mcp,gitlab,devops"
+      io.openshift.tags="mcp,gitlab,devops" \
+      org.opencontainers.image.source="https://github.com/crunchtools/mcp-gitlab" \
+      org.opencontainers.image.description="Secure MCP server for GitLab projects, merge requests, issues, and pipelines" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later"
 
 # Set working directory
 WORKDIR /app
