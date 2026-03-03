@@ -13,3 +13,7 @@ repos:
         language: system
         types: [python]
         stages: [pre-commit, pre-merge-commit]
+  - repo: https://github.com/crunchtools/constitution
+    rev: v1.0.0
+    hooks:
+      - id: validate-constitution
