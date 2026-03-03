@@ -3,6 +3,8 @@
 > **Version:** 1.0.0
 > **Ratified:** 2026-02-27
 > **Status:** Active
+> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.0.0
+> **Profile:** MCP Server
 
 This constitution establishes the core principles, constraints, and workflows that govern all development on mcp-gitlab-crunchtools.
 
