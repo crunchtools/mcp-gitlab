@@ -4,9 +4,6 @@ These tests verify tool behavior without making actual API calls.
 Integration tests with a real GitLab account should be run separately.
 """
 
-from unittest.mock import AsyncMock, patch
-
-import httpx
 import pytest
 
 from tests.conftest import _mock_response, _patch_client
@@ -237,7 +234,6 @@ class TestConfigSafety:
             del os.environ["SSL_CERT_FILE"]
 
 
-
 class TestPipelineTools:
     """Tests for pipeline tools with mocked API responses."""
 
@@ -350,9 +346,7 @@ class TestJobTools:
         )
 
         with _patch_client(resp):
-            result = await list_pipeline_jobs(
-                project_id="12345", pipeline_id=100
-            )
+            result = await list_pipeline_jobs(project_id="12345", pipeline_id=100)
 
         assert len(result["items"]) == 2
         assert result["items"][0]["stage"] == "test"
@@ -414,8 +408,6 @@ class TestJobTools:
             result = await delete_job(project_id="12345", job_id=500)
 
         assert result["id"] == 500
-
-
 
 
 class TestProjectTools:
@@ -491,7 +483,8 @@ class TestProjectTools:
         resp = _mock_response(
             status_code=201,
             json_data={
-                "id": 100, "name": "new-project",
+                "id": 100,
+                "name": "new-project",
                 "path_with_namespace": "smccarty/new-project",
                 "visibility": "private",
                 "web_url": "https://gitlab.com/smccarty/new-project",
@@ -546,9 +539,7 @@ class TestIssueTools:
         )
 
         with _patch_client(resp):
-            result = await update_issue(
-                project_id="1", issue_iid=1, state_event="close"
-            )
+            result = await update_issue(project_id="1", issue_iid=1, state_event="close")
 
         assert result["state"] == "closed"
 
@@ -563,9 +554,7 @@ class TestIssueTools:
         )
 
         with _patch_client(resp):
-            result = await create_issue_note(
-                project_id="1", issue_iid=1, body="Fixed in v2.0"
-            )
+            result = await create_issue_note(project_id="1", issue_iid=1, body="Fixed in v2.0")
 
         assert result["body"] == "Fixed in v2.0"
 
@@ -581,8 +570,12 @@ class TestMergeRequestTools:
         resp = _mock_response(
             status_code=201,
             json_data={
-                "id": 20, "iid": 5, "title": "Add auth",
-                "source_branch": "feature", "target_branch": "main", "state": "opened",
+                "id": 20,
+                "iid": 5,
+                "title": "Add auth",
+                "source_branch": "feature",
+                "target_branch": "main",
+                "state": "opened",
             },
         )
 
@@ -604,7 +597,8 @@ class TestMergeRequestTools:
 
         resp = _mock_response(
             json_data={
-                "id": 20, "iid": 5,
+                "id": 20,
+                "iid": 5,
                 "changes": [{"old_path": "a.py", "new_path": "a.py", "diff": "@@ -1 +1 @@"}],
             },
         )
@@ -633,8 +627,6 @@ class TestSearchTools:
 
         assert len(result["items"]) == 1
         assert result["items"][0]["name"] == "auth-service"
-
-
 
 
 class TestClientErrorHandling:
@@ -696,8 +688,6 @@ class TestClientErrorHandling:
         assert result == {"status": "deleted"}
 
 
-
-
 class TestFileTools:
     """Tests for file tools with mocked API responses."""
 
@@ -755,8 +745,11 @@ class TestFileTools:
 
         with _patch_client(resp):
             result = await create_file(
-                project_id="1", file_path="new_file.py", branch="main",
-                content="print('hello')", commit_message="Add new file",
+                project_id="1",
+                file_path="new_file.py",
+                branch="main",
+                content="print('hello')",
+                commit_message="Add new file",
             )
 
         assert result["file_path"] == "new_file.py"
@@ -772,13 +765,14 @@ class TestFileTools:
 
         with _patch_client(resp):
             result = await update_file(
-                project_id="1", file_path="README.md", branch="main",
-                content="# Updated", commit_message="Update readme",
+                project_id="1",
+                file_path="README.md",
+                branch="main",
+                content="# Updated",
+                commit_message="Update readme",
             )
 
         assert result["file_path"] == "README.md"
-
-
 
 
 class TestBranchTools:
@@ -796,7 +790,9 @@ class TestBranchTools:
 
         with _patch_client(resp):
             result = await create_branch(
-                project_id="1", branch="feature/auth", ref="main",
+                project_id="1",
+                branch="feature/auth",
+                ref="main",
             )
 
         assert result["name"] == "feature/auth"
@@ -828,13 +824,13 @@ class TestBranchTools:
 
         with _patch_client(resp):
             result = await compare_branches(
-                project_id="1", from_ref="main", to_ref="feature",
+                project_id="1",
+                from_ref="main",
+                to_ref="feature",
             )
 
         assert len(result["commits"]) == 1
         assert len(result["diffs"]) == 1
-
-
 
 
 class TestLabelTools:
@@ -870,7 +866,9 @@ class TestLabelTools:
 
         with _patch_client(resp):
             result = await create_label(
-                project_id="1", name="urgent", color="#FF0000",
+                project_id="1",
+                name="urgent",
+                color="#FF0000",
             )
 
         assert result["name"] == "urgent"
@@ -886,7 +884,9 @@ class TestLabelTools:
 
         with _patch_client(resp):
             result = await update_label(
-                project_id="1", label_id=3, new_name="critical",
+                project_id="1",
+                label_id=3,
+                new_name="critical",
             )
 
         assert result["name"] == "critical"
@@ -902,8 +902,6 @@ class TestLabelTools:
             result = await delete_label(project_id="1", label_id=3)
 
         assert result["status"] == "deleted"
-
-
 
 
 class TestUserTools:
@@ -956,8 +954,6 @@ class TestUserTools:
         assert result["id"] == 42
 
 
-
-
 class TestReleaseTools:
     """Tests for release tools with mocked API responses."""
 
@@ -987,7 +983,8 @@ class TestReleaseTools:
 
         resp = _mock_response(
             json_data={
-                "tag_name": "v1.0.0", "name": "v1.0.0",
+                "tag_name": "v1.0.0",
+                "name": "v1.0.0",
                 "description": "First release",
             },
         )
@@ -1009,13 +1006,14 @@ class TestReleaseTools:
 
         with _patch_client(resp):
             result = await create_release(
-                project_id="1", tag_name="v2.0.0", name="v2.0.0",
-                description="Major release", ref="main",
+                project_id="1",
+                tag_name="v2.0.0",
+                name="v2.0.0",
+                description="Major release",
+                ref="main",
             )
 
         assert result["tag_name"] == "v2.0.0"
-
-
 
 
 class TestMilestoneTools:
@@ -1047,14 +1045,18 @@ class TestMilestoneTools:
         resp = _mock_response(
             status_code=201,
             json_data={
-                "id": 3, "title": "Sprint 3", "state": "active",
+                "id": 3,
+                "title": "Sprint 3",
+                "state": "active",
                 "due_date": "2026-03-15",
             },
         )
 
         with _patch_client(resp):
             result = await create_milestone(
-                project_id="1", title="Sprint 3", due_date="2026-03-15",
+                project_id="1",
+                title="Sprint 3",
+                due_date="2026-03-15",
             )
 
         assert result["title"] == "Sprint 3"
@@ -1070,12 +1072,12 @@ class TestMilestoneTools:
 
         with _patch_client(resp):
             result = await update_milestone(
-                project_id="1", milestone_id=1, state_event="close",
+                project_id="1",
+                milestone_id=1,
+                state_event="close",
             )
 
         assert result["state"] == "closed"
-
-
 
 
 class TestMRDiscussionTools:
@@ -1126,12 +1128,12 @@ class TestMRDiscussionTools:
 
         with _patch_client(resp):
             result = await create_mr_discussion(
-                project_id="1", merge_request_iid=5, body="New thread",
+                project_id="1",
+                merge_request_iid=5,
+                body="New thread",
             )
 
         assert result["id"] == "disc3"
-
-
 
 
 class TestWikiTools:
@@ -1162,8 +1164,10 @@ class TestWikiTools:
 
         resp = _mock_response(
             json_data={
-                "slug": "home", "title": "Home",
-                "content": "# Welcome", "format": "markdown",
+                "slug": "home",
+                "title": "Home",
+                "content": "# Welcome",
+                "format": "markdown",
             },
         )
 
@@ -1184,12 +1188,12 @@ class TestWikiTools:
 
         with _patch_client(resp):
             result = await create_wiki_page(
-                project_id="1", title="New Page", content="# New",
+                project_id="1",
+                title="New Page",
+                content="# New",
             )
 
         assert result["slug"] == "new-page"
-
-
 
 
 class TestSnippetTools:
@@ -1220,15 +1224,19 @@ class TestSnippetTools:
         resp = _mock_response(
             status_code=201,
             json_data={
-                "id": 2, "title": "Helper script",
-                "file_name": "helper.py", "visibility": "internal",
+                "id": 2,
+                "title": "Helper script",
+                "file_name": "helper.py",
+                "visibility": "internal",
             },
         )
 
         with _patch_client(resp):
             result = await create_snippet(
-                project_id="1", title="Helper script",
-                file_name="helper.py", content="print('hi')",
+                project_id="1",
+                title="Helper script",
+                file_name="helper.py",
+                content="print('hi')",
                 visibility="internal",
             )
 
