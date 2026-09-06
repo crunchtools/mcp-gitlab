@@ -99,3 +99,13 @@ justification = "Optional API parameter builders use simple if-guards to add que
 check = "implicit_state_machine"
 path = "src/mcp_gitlab_crunchtools/client.py"
 justification = "Error handling dispatches on HTTP status codes — standard pattern, not a state machine"
+
+[[exceptions]]
+check = "copy_paste_detection"
+path = "src/mcp_gitlab_crunchtools/models.py"
+justification = "encode_project_id and encode_group_id validate against different patterns with different error text before URL-encoding. GitLab treats project and group paths as separate namespaces and the messages need to say which one was wrong."
+
+[[exceptions]]
+check = "copy_paste_detection"
+path = "src/mcp_gitlab_crunchtools/client.py"
+justification = "get_client and get_config are both the four-line lazy-singleton accessor: check the module global, construct if None, return. The duplication is the idiom; hiding it behind a generic obscures which global is being initialised."
