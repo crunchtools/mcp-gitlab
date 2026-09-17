@@ -1,5 +1,5 @@
 # MCP GitLab CrunchTools Container
-# Built on Hummingbird Python image (Red Hat UBI-based) for enterprise security
+# Built on Hummingbird Python image for enterprise security
 #
 # Build:
 #   podman build -t quay.io/crunchtools/mcp-gitlab .
@@ -12,25 +12,24 @@
 #     --env GITLAB_TOKEN=your_token \
 #     -- podman run -i --rm -e GITLAB_TOKEN quay.io/crunchtools/mcp-gitlab
 
-# Builder stage: the "latest" default variant is distroless (no shell/pip),
-# so dependencies are installed here and copied into the distroless final image.
+# Stage 1: Builder (has shell, dnf, build tools)
 FROM quay.io/hummingbird/python:latest-builder AS builder
-
+USER 0
 WORKDIR /app
-
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
-
 RUN pip install --no-cache-dir .
 
-# Final stage: distroless runtime, no shell/dnf/pip in the shipped image.
+# Stage 2: Runtime (distroless — no shell, no package manager)
 FROM quay.io/hummingbird/python:latest
 
 # Labels for container metadata
 LABEL name="mcp-gitlab-crunchtools" \
       version="0.4.1" \
       summary="Secure MCP server for GitLab projects, merge requests, issues, and pipelines" \
-      description="A security-focused MCP server for GitLab built on Red Hat UBI" \
+      description="A security-focused MCP server for GitLab built on Hummingbird" \
       maintainer="crunchtools.com" \
       url="https://github.com/crunchtools/mcp-gitlab" \
       io.k8s.display-name="MCP GitLab CrunchTools" \
@@ -39,10 +38,8 @@ LABEL name="mcp-gitlab-crunchtools" \
       org.opencontainers.image.description="Secure MCP server for GitLab projects, merge requests, issues, and pipelines" \
       org.opencontainers.image.licenses="AGPL-3.0-or-later"
 
-# Pip installs to the user site (/tmp/.local) since HOME=/tmp and the image
-# runs as the non-root default user; copy that tree straight into the final image.
-COPY --from=builder --chown=65532:65532 /tmp/.local /tmp/.local
-ENV PATH="/tmp/.local/bin:${PATH}"
+COPY --from=builder /app/venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
 
 # Verify installation. Exec form, since this stage has no /bin/sh for RUN's shell form.
 RUN ["python3", "-c", "from mcp_gitlab_crunchtools import main; print('Installation verified')"]
