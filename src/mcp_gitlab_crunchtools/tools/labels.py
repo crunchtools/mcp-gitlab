@@ -72,6 +72,7 @@ async def create_label(
 
 
 async def update_label(
+    *,
     project_id: str,
     label_id: int,
     new_name: str | None = None,
@@ -105,9 +106,7 @@ async def update_label(
     if priority is not None:
         data["priority"] = priority
 
-    return await client.put(
-        f"/projects/{encoded_id}/labels/{label_id}", json_data=data
-    )
+    return await client.put(f"/projects/{encoded_id}/labels/{label_id}", json_data=data)
 
 
 async def delete_label(

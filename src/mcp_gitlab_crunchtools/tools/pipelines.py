@@ -10,6 +10,7 @@ from ..models import encode_project_id
 
 
 async def list_pipelines(
+    *,
     project_id: str,
     status: str | None = None,
     ref: str | None = None,
@@ -100,9 +101,7 @@ async def list_pipeline_jobs(
     if scope:
         params["scope"] = scope
 
-    return await client.get(
-        f"/projects/{encoded_id}/pipelines/{pipeline_id}/jobs", params=params
-    )
+    return await client.get(f"/projects/{encoded_id}/pipelines/{pipeline_id}/jobs", params=params)
 
 
 async def get_job_log(
@@ -138,9 +137,7 @@ async def create_pipeline(
     """
     client = get_client()
     encoded_id = encode_project_id(project_id)
-    return await client.post(
-        f"/projects/{encoded_id}/pipeline", json_data={"ref": ref}
-    )
+    return await client.post(f"/projects/{encoded_id}/pipeline", json_data={"ref": ref})
 
 
 async def retry_pipeline(

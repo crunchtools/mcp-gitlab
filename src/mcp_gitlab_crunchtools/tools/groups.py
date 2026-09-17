@@ -10,6 +10,7 @@ from ..models import encode_group_id
 
 
 async def list_groups(
+    *,
     search: str | None = None,
     owned: bool = False,
     top_level_only: bool = False,
@@ -75,6 +76,7 @@ async def get_group(
 
 
 async def list_group_projects(
+    *,
     group_id: str,
     search: str | None = None,
     visibility: str | None = None,

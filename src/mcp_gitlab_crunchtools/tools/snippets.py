@@ -32,12 +32,11 @@ async def list_snippets(
         "per_page": min(per_page, 100),
     }
 
-    return await client.get(
-        f"/projects/{encoded_id}/snippets", params=params
-    )
+    return await client.get(f"/projects/{encoded_id}/snippets", params=params)
 
 
 async def create_snippet(
+    *,
     project_id: str,
     title: str,
     file_name: str,
@@ -69,6 +68,4 @@ async def create_snippet(
     if description:
         data["description"] = description
 
-    return await client.post(
-        f"/projects/{encoded_id}/snippets", json_data=data
-    )
+    return await client.post(f"/projects/{encoded_id}/snippets", json_data=data)

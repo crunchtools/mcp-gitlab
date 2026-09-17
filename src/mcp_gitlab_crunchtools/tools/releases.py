@@ -60,6 +60,7 @@ async def get_release(
 
 
 async def create_release(
+    *,
     project_id: str,
     tag_name: str,
     name: str | None = None,
@@ -93,6 +94,4 @@ async def create_release(
     if released_at:
         data["released_at"] = released_at
 
-    return await client.post(
-        f"/projects/{encoded_id}/releases", json_data=data
-    )
+    return await client.post(f"/projects/{encoded_id}/releases", json_data=data)

@@ -11,6 +11,7 @@ from ..models import encode_project_id
 
 
 async def list_repository_tree(
+    *,
     project_id: str,
     path: str = "",
     ref: str | None = None,
@@ -46,9 +47,7 @@ async def list_repository_tree(
     if recursive:
         params["recursive"] = "true"
 
-    return await client.get(
-        f"/projects/{encoded_id}/repository/tree", params=params
-    )
+    return await client.get(f"/projects/{encoded_id}/repository/tree", params=params)
 
 
 async def get_file(
@@ -78,6 +77,7 @@ async def get_file(
 
 
 async def create_file(
+    *,
     project_id: str,
     file_path: str,
     branch: str,
@@ -113,6 +113,7 @@ async def create_file(
 
 
 async def update_file(
+    *,
     project_id: str,
     file_path: str,
     branch: str,

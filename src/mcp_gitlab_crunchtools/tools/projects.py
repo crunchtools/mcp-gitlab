@@ -11,6 +11,7 @@ from ..models import CreateProjectInput, encode_project_id
 
 
 async def list_projects(
+    *,
     search: str | None = None,
     owned: bool = False,
     membership: bool = False,
@@ -122,6 +123,7 @@ async def get_project_branch(
 
 
 async def list_project_commits(
+    *,
     project_id: str,
     ref_name: str | None = None,
     since: str | None = None,

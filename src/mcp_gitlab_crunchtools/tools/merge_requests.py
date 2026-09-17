@@ -10,6 +10,7 @@ from ..models import CreateMergeRequestInput, UpdateMergeRequestInput, encode_pr
 
 
 async def list_merge_requests(
+    *,
     project_id: str,
     state: str = "opened",
     order_by: str = "created_at",
@@ -76,6 +77,7 @@ async def get_merge_request(
 
 
 async def create_merge_request(
+    *,
     project_id: str,
     source_branch: str,
     target_branch: str,
@@ -142,6 +144,7 @@ async def create_merge_request(
 
 
 async def update_merge_request(
+    *,
     project_id: str,
     merge_request_iid: int,
     title: str | None = None,
@@ -213,6 +216,7 @@ async def update_merge_request(
 
 
 async def list_mr_notes(
+    *,
     project_id: str,
     merge_request_iid: int,
     order_by: str = "created_at",
@@ -290,9 +294,7 @@ async def get_mr_changes(
     """
     client = get_client()
     encoded_id = encode_project_id(project_id)
-    return await client.get(
-        f"/projects/{encoded_id}/merge_requests/{merge_request_iid}/changes"
-    )
+    return await client.get(f"/projects/{encoded_id}/merge_requests/{merge_request_iid}/changes")
 
 
 async def list_mr_discussions(

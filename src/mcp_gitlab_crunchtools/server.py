@@ -86,9 +86,9 @@ mcp = FastMCP(
 )
 
 
-
 @mcp.tool()
 async def list_projects_tool(
+    *,
     search: str | None = None,
     owned: bool = False,
     membership: bool = False,
@@ -182,6 +182,7 @@ async def get_project_branch_tool(
 
 @mcp.tool()
 async def list_project_commits_tool(
+    *,
     project_id: str,
     ref_name: str | None = None,
     since: str | None = None,
@@ -259,10 +260,9 @@ async def delete_project_tool(
     return await delete_project(project_id=project_id)
 
 
-
-
 @mcp.tool()
 async def list_groups_tool(
+    *,
     search: str | None = None,
     owned: bool = False,
     top_level_only: bool = False,
@@ -315,6 +315,7 @@ async def get_group_tool(
 
 @mcp.tool()
 async def list_group_projects_tool(
+    *,
     group_id: str,
     search: str | None = None,
     visibility: str | None = None,
@@ -351,10 +352,9 @@ async def list_group_projects_tool(
     )
 
 
-
-
 @mcp.tool()
 async def list_merge_requests_tool(
+    *,
     project_id: str,
     state: str = "opened",
     order_by: str = "created_at",
@@ -408,13 +408,12 @@ async def get_merge_request_tool(
     Returns:
         Merge request details including source/target branches, status, and approvals
     """
-    return await get_merge_request(
-        project_id=project_id, merge_request_iid=merge_request_iid
-    )
+    return await get_merge_request(project_id=project_id, merge_request_iid=merge_request_iid)
 
 
 @mcp.tool()
 async def create_merge_request_tool(
+    *,
     project_id: str,
     source_branch: str,
     target_branch: str,
@@ -459,6 +458,7 @@ async def create_merge_request_tool(
 
 @mcp.tool()
 async def update_merge_request_tool(
+    *,
     project_id: str,
     merge_request_iid: int,
     title: str | None = None,
@@ -506,6 +506,7 @@ async def update_merge_request_tool(
 
 @mcp.tool()
 async def list_mr_notes_tool(
+    *,
     project_id: str,
     merge_request_iid: int,
     order_by: str = "created_at",
@@ -571,9 +572,7 @@ async def get_mr_changes_tool(
     Returns:
         Merge request details with file diffs
     """
-    return await get_mr_changes(
-        project_id=project_id, merge_request_iid=merge_request_iid
-    )
+    return await get_mr_changes(project_id=project_id, merge_request_iid=merge_request_iid)
 
 
 @mcp.tool()
@@ -625,10 +624,9 @@ async def create_mr_discussion_tool(
     )
 
 
-
-
 @mcp.tool()
 async def list_issues_tool(
+    *,
     project_id: str,
     state: str = "opened",
     order_by: str = "created_at",
@@ -690,6 +688,7 @@ async def get_issue_tool(
 
 @mcp.tool()
 async def create_issue_tool(
+    *,
     project_id: str,
     title: str,
     description: str | None = None,
@@ -725,6 +724,7 @@ async def create_issue_tool(
 
 @mcp.tool()
 async def update_issue_tool(
+    *,
     project_id: str,
     issue_iid: int,
     title: str | None = None,
@@ -766,6 +766,7 @@ async def update_issue_tool(
 
 @mcp.tool()
 async def list_issue_notes_tool(
+    *,
     project_id: str,
     issue_iid: int,
     order_by: str = "created_at",
@@ -812,15 +813,12 @@ async def create_issue_note_tool(
     Returns:
         Created note details
     """
-    return await create_issue_note(
-        project_id=project_id, issue_iid=issue_iid, body=body
-    )
-
-
+    return await create_issue_note(project_id=project_id, issue_iid=issue_iid, body=body)
 
 
 @mcp.tool()
 async def list_pipelines_tool(
+    *,
     project_id: str,
     status: str | None = None,
     ref: str | None = None,
@@ -1038,8 +1036,6 @@ async def delete_job_tool(
     return await delete_job(project_id=project_id, job_id=job_id)
 
 
-
-
 @mcp.tool()
 async def search_global_tool(
     search: str,
@@ -1088,10 +1084,9 @@ async def search_project_tool(
     )
 
 
-
-
 @mcp.tool()
 async def list_repository_tree_tool(
+    *,
     project_id: str,
     path: str = "",
     ref: str | None = None,
@@ -1113,8 +1108,12 @@ async def list_repository_tree_tool(
         List of tree entries (blobs and trees) with pagination info
     """
     return await list_repository_tree(
-        project_id=project_id, path=path, ref=ref, recursive=recursive,
-        page=page, per_page=per_page,
+        project_id=project_id,
+        path=path,
+        ref=ref,
+        recursive=recursive,
+        page=page,
+        per_page=per_page,
     )
 
 
@@ -1141,6 +1140,7 @@ async def get_file_tool(
 
 @mcp.tool()
 async def create_file_tool(
+    *,
     project_id: str,
     file_path: str,
     branch: str,
@@ -1162,13 +1162,18 @@ async def create_file_tool(
         Created file metadata
     """
     return await create_file(
-        project_id=project_id, file_path=file_path, branch=branch,
-        content=content, commit_message=commit_message, encoding=encoding,
+        project_id=project_id,
+        file_path=file_path,
+        branch=branch,
+        content=content,
+        commit_message=commit_message,
+        encoding=encoding,
     )
 
 
 @mcp.tool()
 async def update_file_tool(
+    *,
     project_id: str,
     file_path: str,
     branch: str,
@@ -1190,11 +1195,13 @@ async def update_file_tool(
         Updated file metadata
     """
     return await update_file(
-        project_id=project_id, file_path=file_path, branch=branch,
-        content=content, commit_message=commit_message, encoding=encoding,
+        project_id=project_id,
+        file_path=file_path,
+        branch=branch,
+        content=content,
+        commit_message=commit_message,
+        encoding=encoding,
     )
-
-
 
 
 @mcp.tool()
@@ -1252,10 +1259,11 @@ async def compare_branches_tool(
         Comparison with commits, diffs, and stats
     """
     return await compare_branches(
-        project_id=project_id, from_ref=from_ref, to_ref=to_ref, straight=straight,
+        project_id=project_id,
+        from_ref=from_ref,
+        to_ref=to_ref,
+        straight=straight,
     )
-
-
 
 
 @mcp.tool()
@@ -1277,7 +1285,10 @@ async def list_labels_tool(
         List of labels with pagination info
     """
     return await list_labels(
-        project_id=project_id, search=search, page=page, per_page=per_page,
+        project_id=project_id,
+        search=search,
+        page=page,
+        per_page=per_page,
     )
 
 
@@ -1302,13 +1313,17 @@ async def create_label_tool(
         Created label details
     """
     return await create_label(
-        project_id=project_id, name=name, color=color,
-        description=description, priority=priority,
+        project_id=project_id,
+        name=name,
+        color=color,
+        description=description,
+        priority=priority,
     )
 
 
 @mcp.tool()
 async def update_label_tool(
+    *,
     project_id: str,
     label_id: int,
     new_name: str | None = None,
@@ -1330,8 +1345,12 @@ async def update_label_tool(
         Updated label details
     """
     return await update_label(
-        project_id=project_id, label_id=label_id, new_name=new_name,
-        color=color, description=description, priority=priority,
+        project_id=project_id,
+        label_id=label_id,
+        new_name=new_name,
+        color=color,
+        description=description,
+        priority=priority,
     )
 
 
@@ -1350,8 +1369,6 @@ async def delete_label_tool(
         Confirmation of deletion
     """
     return await delete_label(project_id=project_id, label_id=label_id)
-
-
 
 
 @mcp.tool()
@@ -1385,8 +1402,11 @@ async def list_users_tool(
         List of users with pagination info
     """
     return await list_users(
-        search=search, username=username, active=active,
-        page=page, per_page=per_page,
+        search=search,
+        username=username,
+        active=active,
+        page=page,
+        per_page=per_page,
     )
 
 
@@ -1403,8 +1423,6 @@ async def get_user_tool(
         User details including username, name, email, and state
     """
     return await get_user(user_id=user_id)
-
-
 
 
 @mcp.tool()
@@ -1428,8 +1446,11 @@ async def list_releases_tool(
         List of releases with pagination info
     """
     return await list_releases(
-        project_id=project_id, order_by=order_by, sort=sort,
-        page=page, per_page=per_page,
+        project_id=project_id,
+        order_by=order_by,
+        sort=sort,
+        page=page,
+        per_page=per_page,
     )
 
 
@@ -1452,6 +1473,7 @@ async def get_release_tool(
 
 @mcp.tool()
 async def create_release_tool(
+    *,
     project_id: str,
     tag_name: str,
     name: str | None = None,
@@ -1473,11 +1495,13 @@ async def create_release_tool(
         Created release details
     """
     return await create_release(
-        project_id=project_id, tag_name=tag_name, name=name,
-        description=description, ref=ref, released_at=released_at,
+        project_id=project_id,
+        tag_name=tag_name,
+        name=name,
+        description=description,
+        ref=ref,
+        released_at=released_at,
     )
-
-
 
 
 @mcp.tool()
@@ -1501,8 +1525,11 @@ async def list_milestones_tool(
         List of milestones with pagination info
     """
     return await list_milestones(
-        project_id=project_id, state=state, search=search,
-        page=page, per_page=per_page,
+        project_id=project_id,
+        state=state,
+        search=search,
+        page=page,
+        per_page=per_page,
     )
 
 
@@ -1527,13 +1554,17 @@ async def create_milestone_tool(
         Created milestone details
     """
     return await create_milestone(
-        project_id=project_id, title=title, description=description,
-        due_date=due_date, start_date=start_date,
+        project_id=project_id,
+        title=title,
+        description=description,
+        due_date=due_date,
+        start_date=start_date,
     )
 
 
 @mcp.tool()
 async def update_milestone_tool(
+    *,
     project_id: str,
     milestone_id: int,
     title: str | None = None,
@@ -1557,12 +1588,14 @@ async def update_milestone_tool(
         Updated milestone details
     """
     return await update_milestone(
-        project_id=project_id, milestone_id=milestone_id, title=title,
-        description=description, due_date=due_date, start_date=start_date,
+        project_id=project_id,
+        milestone_id=milestone_id,
+        title=title,
+        description=description,
+        due_date=due_date,
+        start_date=start_date,
         state_event=state_event,
     )
-
-
 
 
 @mcp.tool()
@@ -1584,8 +1617,10 @@ async def list_wiki_pages_tool(
         List of wiki pages with pagination info
     """
     return await list_wiki_pages(
-        project_id=project_id, with_content=with_content,
-        page=page, per_page=per_page,
+        project_id=project_id,
+        with_content=with_content,
+        page=page,
+        per_page=per_page,
     )
 
 
@@ -1625,10 +1660,11 @@ async def create_wiki_page_tool(
         Created wiki page details
     """
     return await create_wiki_page(
-        project_id=project_id, title=title, content=content, format=format,
+        project_id=project_id,
+        title=title,
+        content=content,
+        format=format,
     )
-
-
 
 
 @mcp.tool()
@@ -1652,6 +1688,7 @@ async def list_snippets_tool(
 
 @mcp.tool()
 async def create_snippet_tool(
+    *,
     project_id: str,
     title: str,
     file_name: str,
@@ -1673,6 +1710,10 @@ async def create_snippet_tool(
         Created snippet details
     """
     return await create_snippet(
-        project_id=project_id, title=title, file_name=file_name,
-        content=content, description=description, visibility=visibility,
+        project_id=project_id,
+        title=title,
+        file_name=file_name,
+        content=content,
+        description=description,
+        visibility=visibility,
     )

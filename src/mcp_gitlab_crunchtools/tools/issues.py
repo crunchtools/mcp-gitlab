@@ -10,6 +10,7 @@ from ..models import CreateIssueInput, UpdateIssueInput, encode_project_id
 
 
 async def list_issues(
+    *,
     project_id: str,
     state: str = "opened",
     order_by: str = "created_at",
@@ -80,6 +81,7 @@ async def get_issue(
 
 
 async def create_issue(
+    *,
     project_id: str,
     title: str,
     description: str | None = None,
@@ -131,6 +133,7 @@ async def create_issue(
 
 
 async def update_issue(
+    *,
     project_id: str,
     issue_iid: int,
     title: str | None = None,
@@ -186,12 +189,11 @@ async def update_issue(
     if validated.confidential is not None:
         data["confidential"] = validated.confidential
 
-    return await client.put(
-        f"/projects/{encoded_id}/issues/{issue_iid}", json_data=data
-    )
+    return await client.put(f"/projects/{encoded_id}/issues/{issue_iid}", json_data=data)
 
 
 async def list_issue_notes(
+    *,
     project_id: str,
     issue_iid: int,
     order_by: str = "created_at",
@@ -222,9 +224,7 @@ async def list_issue_notes(
         "per_page": min(per_page, 100),
     }
 
-    return await client.get(
-        f"/projects/{encoded_id}/issues/{issue_iid}/notes", params=params
-    )
+    return await client.get(f"/projects/{encoded_id}/issues/{issue_iid}/notes", params=params)
 
 
 async def create_issue_note(

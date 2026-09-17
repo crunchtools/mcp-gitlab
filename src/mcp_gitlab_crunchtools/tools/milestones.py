@@ -40,9 +40,7 @@ async def list_milestones(
     if search:
         params["search"] = search
 
-    return await client.get(
-        f"/projects/{encoded_id}/milestones", params=params
-    )
+    return await client.get(f"/projects/{encoded_id}/milestones", params=params)
 
 
 async def create_milestone(
@@ -75,12 +73,11 @@ async def create_milestone(
     if start_date:
         data["start_date"] = start_date
 
-    return await client.post(
-        f"/projects/{encoded_id}/milestones", json_data=data
-    )
+    return await client.post(f"/projects/{encoded_id}/milestones", json_data=data)
 
 
 async def update_milestone(
+    *,
     project_id: str,
     milestone_id: int,
     title: str | None = None,
@@ -118,6 +115,4 @@ async def update_milestone(
     if state_event:
         data["state_event"] = state_event
 
-    return await client.put(
-        f"/projects/{encoded_id}/milestones/{milestone_id}", json_data=data
-    )
+    return await client.put(f"/projects/{encoded_id}/milestones/{milestone_id}", json_data=data)
