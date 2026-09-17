@@ -79,7 +79,6 @@ dmypy.json
 
 # uv
 .uv/
-uv.lock
 
 # Local development
 .envrc
