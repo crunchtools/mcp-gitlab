@@ -12,7 +12,18 @@
 #     --env GITLAB_TOKEN=your_token \
 #     -- podman run -i --rm -e GITLAB_TOKEN quay.io/crunchtools/mcp-gitlab
 
-# Use Hummingbird Python image (Red Hat UBI-based with Python pre-installed)
+# Builder stage: the "latest" default variant is distroless (no shell/pip),
+# so dependencies are installed here and copied into the distroless final image.
+FROM quay.io/hummingbird/python:latest-builder AS builder
+
+WORKDIR /app
+
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+
+RUN pip install --no-cache-dir .
+
+# Final stage: distroless runtime, no shell/dnf/pip in the shipped image.
 FROM quay.io/hummingbird/python:latest
 
 # Labels for container metadata
@@ -28,18 +39,13 @@ LABEL name="mcp-gitlab-crunchtools" \
       org.opencontainers.image.description="Secure MCP server for GitLab projects, merge requests, issues, and pipelines" \
       org.opencontainers.image.licenses="AGPL-3.0-or-later"
 
-# Set working directory
-WORKDIR /app
+# Pip installs to the user site (/tmp/.local) since HOME=/tmp and the image
+# runs as the non-root default user; copy that tree straight into the final image.
+COPY --from=builder --chown=65532:65532 /tmp/.local /tmp/.local
+ENV PATH="/tmp/.local/bin:${PATH}"
 
-# Copy project files
-COPY pyproject.toml README.md ./
-COPY src/ ./src/
-
-# Install the package and dependencies
-RUN pip install --no-cache-dir .
-
-# Verify installation
-RUN python -c "from mcp_gitlab_crunchtools import main; print('Installation verified')"
+# Verify installation. Exec form, since this stage has no /bin/sh for RUN's shell form.
+RUN ["python3", "-c", "from mcp_gitlab_crunchtools import main; print('Installation verified')"]
 
 # Default: stdio transport (use -i with podman run)
 # HTTP:    --transport streamable-http (use -d -p 8015:8015 with podman run)
