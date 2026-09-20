@@ -4,6 +4,8 @@ These tests verify tool behavior without making actual API calls.
 Integration tests with a real GitLab account should be run separately.
 """
 
+import os
+
 import pytest
 
 from tests.conftest import _mock_response, _patch_client
@@ -39,8 +41,6 @@ class TestErrorSafety:
 
     def test_gitlab_api_error_sanitizes_token(self) -> None:
         """GitLabApiError should sanitize tokens from messages."""
-        import os
-
         from mcp_gitlab_crunchtools.errors import GitLabApiError
 
         os.environ["GITLAB_TOKEN"] = "glpat-secret_token_12345"
@@ -69,8 +69,6 @@ class TestConfigSafety:
 
     def test_config_repr_hides_token(self) -> None:
         """Config repr should never show the token."""
-        import os
-
         os.environ["GITLAB_TOKEN"] = "glpat-secret_test_token"
 
         try:
@@ -85,8 +83,6 @@ class TestConfigSafety:
 
     def test_config_requires_token(self) -> None:
         """Config should require GITLAB_TOKEN."""
-        import os
-
         from mcp_gitlab_crunchtools.config import Config
         from mcp_gitlab_crunchtools.errors import ConfigurationError
 
@@ -105,8 +101,6 @@ class TestConfigSafety:
 
     def test_config_default_url(self) -> None:
         """Config should default to gitlab.com."""
-        import os
-
         os.environ["GITLAB_TOKEN"] = "glpat-test"
         os.environ.pop("GITLAB_URL", None)
 
@@ -121,8 +115,6 @@ class TestConfigSafety:
 
     def test_config_custom_url(self) -> None:
         """Config should accept a custom GitLab URL."""
-        import os
-
         os.environ["GITLAB_TOKEN"] = "glpat-test"
         os.environ["GITLAB_URL"] = "https://gitlab.example.com"
 
@@ -137,8 +129,6 @@ class TestConfigSafety:
 
     def test_config_strips_trailing_slash(self) -> None:
         """Config should strip trailing slash from URL."""
-        import os
-
         os.environ["GITLAB_TOKEN"] = "glpat-test"
         os.environ["GITLAB_URL"] = "https://gitlab.example.com/"
 
@@ -153,8 +143,6 @@ class TestConfigSafety:
 
     def test_config_rejects_http(self) -> None:
         """Config should reject non-HTTPS URLs for non-localhost."""
-        import os
-
         from mcp_gitlab_crunchtools.config import Config
         from mcp_gitlab_crunchtools.errors import ConfigurationError
 
@@ -170,8 +158,6 @@ class TestConfigSafety:
 
     def test_config_allows_localhost_http(self) -> None:
         """Config should allow HTTP for localhost."""
-        import os
-
         os.environ["GITLAB_TOKEN"] = "glpat-test"
         os.environ["GITLAB_URL"] = "http://localhost:8080"
 
@@ -186,8 +172,6 @@ class TestConfigSafety:
 
     def test_config_ssl_verify_default(self) -> None:
         """Config should default to SSL verification enabled."""
-        import os
-
         os.environ["GITLAB_TOKEN"] = "glpat-test"
         os.environ.pop("GITLAB_SSL_VERIFY", None)
         os.environ.pop("SSL_CERT_FILE", None)
@@ -202,8 +186,6 @@ class TestConfigSafety:
 
     def test_config_ssl_verify_disabled(self) -> None:
         """Config should allow disabling SSL verification."""
-        import os
-
         os.environ["GITLAB_TOKEN"] = "glpat-test"
         os.environ["GITLAB_SSL_VERIFY"] = "false"
 
@@ -218,8 +200,6 @@ class TestConfigSafety:
 
     def test_config_ssl_cert_file(self) -> None:
         """Config should use SSL_CERT_FILE when set."""
-        import os
-
         os.environ["GITLAB_TOKEN"] = "glpat-test"
         os.environ["SSL_CERT_FILE"] = "/etc/pki/tls/certs/ca-bundle.crt"
         os.environ.pop("GITLAB_SSL_VERIFY", None)

@@ -6,7 +6,7 @@ A secure MCP (Model Context Protocol) server for GitLab projects, merge requests
 
 This MCP server is designed to be:
 
-- **Secure by default** - Comprehensive threat modeling, input validation, and token protection
+- **Secure by default** - documented threat model (see [SECURITY.md](SECURITY.md)), Pydantic input validation, and the API token held as a `SecretStr` to prevent accidental logging
 - **No third-party services** - Runs locally via stdio, your API token never leaves your machine
 - **Multi-instance** - Works with gitlab.com, self-hosted GitLab, or enterprise instances via configurable URL
 - **Cross-platform** - Works on Linux, macOS, and Windows
@@ -102,6 +102,8 @@ podman run -e GITLAB_TOKEN=your_token \
 |----------|----------|---------|-------------|
 | `GITLAB_TOKEN` | Yes | — | Personal Access Token |
 | `GITLAB_URL` | No | `https://gitlab.com` | GitLab instance URL |
+| `SSL_CERT_FILE` | No | — | Custom CA bundle path, for self-hosted GitLab with an internal CA |
+| `GITLAB_SSL_VERIFY` | No | `true` | Set `false` to disable TLS verification (not recommended) |
 
 ### Creating a GitLab Personal Access Token
 

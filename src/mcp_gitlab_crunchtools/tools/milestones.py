@@ -65,15 +65,15 @@ async def create_milestone(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {"title": title}
+    payload: dict[str, Any] = {"title": title}
     if description:
-        data["description"] = description
+        payload["description"] = description
     if due_date:
-        data["due_date"] = due_date
+        payload["due_date"] = due_date
     if start_date:
-        data["start_date"] = start_date
+        payload["start_date"] = start_date
 
-    return await client.post(f"/projects/{encoded_id}/milestones", json_data=data)
+    return await client.post(f"/projects/{encoded_id}/milestones", json_data=payload)
 
 
 async def update_milestone(
@@ -103,16 +103,16 @@ async def update_milestone(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {}
+    payload: dict[str, Any] = {}
     if title:
-        data["title"] = title
+        payload["title"] = title
     if description is not None:
-        data["description"] = description
+        payload["description"] = description
     if due_date:
-        data["due_date"] = due_date
+        payload["due_date"] = due_date
     if start_date:
-        data["start_date"] = start_date
+        payload["start_date"] = start_date
     if state_event:
-        data["state_event"] = state_event
+        payload["state_event"] = state_event
 
-    return await client.put(f"/projects/{encoded_id}/milestones/{milestone_id}", json_data=data)
+    return await client.put(f"/projects/{encoded_id}/milestones/{milestone_id}", json_data=payload)

@@ -60,12 +60,12 @@ async def create_snippet(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {
+    payload: dict[str, Any] = {
         "title": title,
         "files": [{"file_path": file_name, "content": content}],
         "visibility": visibility,
     }
     if description:
-        data["description"] = description
+        payload["description"] = description
 
-    return await client.post(f"/projects/{encoded_id}/snippets", json_data=data)
+    return await client.post(f"/projects/{encoded_id}/snippets", json_data=payload)
