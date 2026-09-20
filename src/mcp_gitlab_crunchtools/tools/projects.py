@@ -195,19 +195,19 @@ async def create_project(
 
     client = get_client()
 
-    data: dict[str, Any] = {
+    payload: dict[str, Any] = {
         "name": validated.name,
         "visibility": validated.visibility,
     }
 
     if validated.description is not None:
-        data["description"] = validated.description
+        payload["description"] = validated.description
     if validated.initialize_with_readme:
-        data["initialize_with_readme"] = True
+        payload["initialize_with_readme"] = True
     if validated.namespace_id is not None:
-        data["namespace_id"] = validated.namespace_id
+        payload["namespace_id"] = validated.namespace_id
 
-    return await client.post("/projects", json_data=data)
+    return await client.post("/projects", json_data=payload)
 
 
 async def delete_project(

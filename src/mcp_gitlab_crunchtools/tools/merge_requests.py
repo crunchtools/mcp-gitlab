@@ -121,26 +121,26 @@ async def create_merge_request(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {
+    payload: dict[str, Any] = {
         "source_branch": validated.source_branch,
         "target_branch": validated.target_branch,
         "title": validated.title,
     }
 
     if validated.description is not None:
-        data["description"] = validated.description
+        payload["description"] = validated.description
     if validated.labels is not None:
-        data["labels"] = validated.labels
+        payload["labels"] = validated.labels
     if validated.assignee_ids is not None:
-        data["assignee_ids"] = validated.assignee_ids
+        payload["assignee_ids"] = validated.assignee_ids
     if validated.reviewer_ids is not None:
-        data["reviewer_ids"] = validated.reviewer_ids
+        payload["reviewer_ids"] = validated.reviewer_ids
     if validated.milestone_id is not None:
-        data["milestone_id"] = validated.milestone_id
+        payload["milestone_id"] = validated.milestone_id
     if validated.remove_source_branch:
-        data["remove_source_branch"] = True
+        payload["remove_source_branch"] = True
 
-    return await client.post(f"/projects/{encoded_id}/merge_requests", json_data=data)
+    return await client.post(f"/projects/{encoded_id}/merge_requests", json_data=payload)
 
 
 async def update_merge_request(
@@ -190,28 +190,28 @@ async def update_merge_request(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {}
+    payload: dict[str, Any] = {}
     if validated.title is not None:
-        data["title"] = validated.title
+        payload["title"] = validated.title
     if validated.description is not None:
-        data["description"] = validated.description
+        payload["description"] = validated.description
     if validated.labels is not None:
-        data["labels"] = validated.labels
+        payload["labels"] = validated.labels
     if validated.state_event is not None:
-        data["state_event"] = validated.state_event
+        payload["state_event"] = validated.state_event
     if validated.assignee_ids is not None:
-        data["assignee_ids"] = validated.assignee_ids
+        payload["assignee_ids"] = validated.assignee_ids
     if validated.reviewer_ids is not None:
-        data["reviewer_ids"] = validated.reviewer_ids
+        payload["reviewer_ids"] = validated.reviewer_ids
     if validated.milestone_id is not None:
-        data["milestone_id"] = validated.milestone_id
+        payload["milestone_id"] = validated.milestone_id
     if validated.target_branch is not None:
-        data["target_branch"] = validated.target_branch
+        payload["target_branch"] = validated.target_branch
     if validated.remove_source_branch is not None:
-        data["remove_source_branch"] = validated.remove_source_branch
+        payload["remove_source_branch"] = validated.remove_source_branch
 
     return await client.put(
-        f"/projects/{encoded_id}/merge_requests/{merge_request_iid}", json_data=data
+        f"/projects/{encoded_id}/merge_requests/{merge_request_iid}", json_data=payload
     )
 
 

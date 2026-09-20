@@ -116,20 +116,20 @@ async def create_issue(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {"title": validated.title}
+    payload: dict[str, Any] = {"title": validated.title}
 
     if validated.description is not None:
-        data["description"] = validated.description
+        payload["description"] = validated.description
     if validated.labels is not None:
-        data["labels"] = validated.labels
+        payload["labels"] = validated.labels
     if validated.assignee_ids is not None:
-        data["assignee_ids"] = validated.assignee_ids
+        payload["assignee_ids"] = validated.assignee_ids
     if validated.milestone_id is not None:
-        data["milestone_id"] = validated.milestone_id
+        payload["milestone_id"] = validated.milestone_id
     if validated.confidential:
-        data["confidential"] = True
+        payload["confidential"] = True
 
-    return await client.post(f"/projects/{encoded_id}/issues", json_data=data)
+    return await client.post(f"/projects/{encoded_id}/issues", json_data=payload)
 
 
 async def update_issue(
@@ -173,23 +173,23 @@ async def update_issue(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {}
+    payload: dict[str, Any] = {}
     if validated.title is not None:
-        data["title"] = validated.title
+        payload["title"] = validated.title
     if validated.description is not None:
-        data["description"] = validated.description
+        payload["description"] = validated.description
     if validated.labels is not None:
-        data["labels"] = validated.labels
+        payload["labels"] = validated.labels
     if validated.state_event is not None:
-        data["state_event"] = validated.state_event
+        payload["state_event"] = validated.state_event
     if validated.assignee_ids is not None:
-        data["assignee_ids"] = validated.assignee_ids
+        payload["assignee_ids"] = validated.assignee_ids
     if validated.milestone_id is not None:
-        data["milestone_id"] = validated.milestone_id
+        payload["milestone_id"] = validated.milestone_id
     if validated.confidential is not None:
-        data["confidential"] = validated.confidential
+        payload["confidential"] = validated.confidential
 
-    return await client.put(f"/projects/{encoded_id}/issues/{issue_iid}", json_data=data)
+    return await client.put(f"/projects/{encoded_id}/issues/{issue_iid}", json_data=payload)
 
 
 async def list_issue_notes(

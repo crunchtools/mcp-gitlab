@@ -62,13 +62,13 @@ async def create_label(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {"name": name, "color": color}
+    payload: dict[str, Any] = {"name": name, "color": color}
     if description:
-        data["description"] = description
+        payload["description"] = description
     if priority is not None:
-        data["priority"] = priority
+        payload["priority"] = priority
 
-    return await client.post(f"/projects/{encoded_id}/labels", json_data=data)
+    return await client.post(f"/projects/{encoded_id}/labels", json_data=payload)
 
 
 async def update_label(
@@ -96,17 +96,17 @@ async def update_label(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {}
+    payload: dict[str, Any] = {}
     if new_name:
-        data["new_name"] = new_name
+        payload["new_name"] = new_name
     if color:
-        data["color"] = color
+        payload["color"] = color
     if description is not None:
-        data["description"] = description
+        payload["description"] = description
     if priority is not None:
-        data["priority"] = priority
+        payload["priority"] = priority
 
-    return await client.put(f"/projects/{encoded_id}/labels/{label_id}", json_data=data)
+    return await client.put(f"/projects/{encoded_id}/labels/{label_id}", json_data=payload)
 
 
 async def delete_label(

@@ -84,14 +84,14 @@ async def create_release(
     client = get_client()
     encoded_id = encode_project_id(project_id)
 
-    data: dict[str, Any] = {"tag_name": tag_name}
+    payload: dict[str, Any] = {"tag_name": tag_name}
     if name:
-        data["name"] = name
+        payload["name"] = name
     if description:
-        data["description"] = description
+        payload["description"] = description
     if ref:
-        data["ref"] = ref
+        payload["ref"] = ref
     if released_at:
-        data["released_at"] = released_at
+        payload["released_at"] = released_at
 
-    return await client.post(f"/projects/{encoded_id}/releases", json_data=data)
+    return await client.post(f"/projects/{encoded_id}/releases", json_data=payload)

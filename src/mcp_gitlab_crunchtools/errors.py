@@ -16,13 +16,9 @@ class UserError(Exception):
     to avoid leaking sensitive information like API tokens or internal paths.
     """
 
-    pass
-
 
 class ConfigurationError(UserError):
     """Error in server configuration."""
-
-    pass
 
 
 class GitLabApiError(UserError):
@@ -67,5 +63,3 @@ class RateLimitError(UserError):
 
 class ValidationError(UserError):
     """Input validation error."""
-
-    pass
