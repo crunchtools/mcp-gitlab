@@ -8,6 +8,7 @@ import os
 
 import pytest
 
+from mcp_gitlab_crunchtools.server import mcp
 from tests.conftest import _mock_response, _patch_client
 
 
@@ -34,6 +35,151 @@ class TestToolRegistration:
         from mcp_gitlab_crunchtools.tools import __all__
 
         assert len(__all__) == 63
+
+
+READ_ONLY = frozenset(
+    {
+        "list_projects_tool",
+        "get_project_tool",
+        "list_project_branches_tool",
+        "get_project_branch_tool",
+        "list_project_commits_tool",
+        "list_groups_tool",
+        "get_group_tool",
+        "list_group_projects_tool",
+        "list_merge_requests_tool",
+        "get_merge_request_tool",
+        "list_mr_notes_tool",
+        "get_mr_changes_tool",
+        "list_mr_discussions_tool",
+        "list_issues_tool",
+        "get_issue_tool",
+        "list_issue_notes_tool",
+        "list_pipelines_tool",
+        "get_pipeline_tool",
+        "list_pipeline_jobs_tool",
+        "get_job_log_tool",
+        "search_global_tool",
+        "search_project_tool",
+        "list_repository_tree_tool",
+        "get_file_tool",
+        "compare_branches_tool",
+        "list_labels_tool",
+        "get_current_user_tool",
+        "list_users_tool",
+        "get_user_tool",
+        "list_releases_tool",
+        "get_release_tool",
+        "list_milestones_tool",
+        "list_wiki_pages_tool",
+        "get_wiki_page_tool",
+        "list_snippets_tool",
+    }
+)
+WRITES = frozenset(
+    {
+        "create_project_tool",
+        "delete_project_tool",
+        "create_merge_request_tool",
+        "update_merge_request_tool",
+        "create_mr_note_tool",
+        "create_mr_discussion_tool",
+        "create_issue_tool",
+        "update_issue_tool",
+        "create_issue_note_tool",
+        "create_pipeline_tool",
+        "retry_pipeline_tool",
+        "cancel_pipeline_tool",
+        "delete_pipeline_tool",
+        "retry_job_tool",
+        "cancel_job_tool",
+        "delete_job_tool",
+        "create_file_tool",
+        "update_file_tool",
+        "create_branch_tool",
+        "delete_branch_tool",
+        "create_label_tool",
+        "update_label_tool",
+        "delete_label_tool",
+        "create_release_tool",
+        "create_milestone_tool",
+        "update_milestone_tool",
+        "create_wiki_page_tool",
+        "create_snippet_tool",
+    }
+)
+
+# Arguments that satisfy each read-only tool's required parameters.
+_PROJECT = {"project_id": "group/project"}
+_MR = {**_PROJECT, "merge_request_iid": 7}
+_ISSUE = {**_PROJECT, "issue_iid": 7}
+READ_ONLY_CALLS: dict[str, dict[str, object]] = {
+    "list_projects_tool": {},
+    "get_project_tool": _PROJECT,
+    "list_project_branches_tool": _PROJECT,
+    "get_project_branch_tool": {**_PROJECT, "branch": "main"},
+    "list_project_commits_tool": _PROJECT,
+    "list_groups_tool": {},
+    "get_group_tool": {"group_id": "group"},
+    "list_group_projects_tool": {"group_id": "group"},
+    "list_merge_requests_tool": _PROJECT,
+    "get_merge_request_tool": _MR,
+    "list_mr_notes_tool": _MR,
+    "get_mr_changes_tool": _MR,
+    "list_mr_discussions_tool": _MR,
+    "list_issues_tool": _PROJECT,
+    "get_issue_tool": _ISSUE,
+    "list_issue_notes_tool": _ISSUE,
+    "list_pipelines_tool": _PROJECT,
+    "get_pipeline_tool": {**_PROJECT, "pipeline_id": 100},
+    "list_pipeline_jobs_tool": {**_PROJECT, "pipeline_id": 100},
+    "get_job_log_tool": {**_PROJECT, "job_id": 200},
+    "search_global_tool": {"search": "auth"},
+    "search_project_tool": {**_PROJECT, "search": "auth"},
+    "list_repository_tree_tool": _PROJECT,
+    "get_file_tool": {**_PROJECT, "file_path": "README.md"},
+    "compare_branches_tool": {**_PROJECT, "from_ref": "main", "to_ref": "dev"},
+    "list_labels_tool": _PROJECT,
+    "get_current_user_tool": {},
+    "list_users_tool": {},
+    "get_user_tool": {"user_id": 1},
+    "list_releases_tool": _PROJECT,
+    "get_release_tool": {**_PROJECT, "tag_name": "v1.0.0"},
+    "list_milestones_tool": _PROJECT,
+    "list_wiki_pages_tool": _PROJECT,
+    "get_wiki_page_tool": {**_PROJECT, "slug": "home"},
+    "list_snippets_tool": _PROJECT,
+}
+
+
+class TestReadOnlyAnnotation:
+    """Every registered tool is classified, and the reads really only read."""
+
+    @pytest.mark.asyncio
+    async def test_every_tool_is_classified(self) -> None:
+        """Each registered tool is in exactly one set; the hint matches READ_ONLY."""
+        tools = await mcp.list_tools()
+        assert READ_ONLY.isdisjoint(WRITES)
+        assert {tool.name for tool in tools} == READ_ONLY | WRITES
+        annotated = {
+            tool.name
+            for tool in tools
+            if tool.annotations is not None
+            and tool.annotations.model_dump(by_alias=True).get("readOnlyHint") is True
+        }
+        assert annotated == READ_ONLY
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("name", sorted(READ_ONLY))
+    async def test_read_only_tool_only_sends_get(self, name: str) -> None:
+        """A read-only tool reaches GitLab with GET or HEAD and no request body."""
+        with _patch_client(_mock_response(json_data={"id": 1})) as client_cls:
+            await mcp.call_tool(name, READ_ONLY_CALLS[name])
+        request = client_cls.return_value.request
+        assert request.await_count >= 1
+        for call in request.await_args_list:
+            assert call.kwargs["method"] in {"GET", "HEAD"}
+            assert call.kwargs["json"] is None
 
 
 class TestErrorSafety:

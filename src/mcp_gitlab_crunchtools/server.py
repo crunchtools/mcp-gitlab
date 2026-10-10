@@ -76,9 +76,13 @@ from .tools import (
 
 logger = logging.getLogger(__name__)
 
+# A gateway drops an invalid optional argument only on a tool annotated read-only;
+# on anything else it refuses the call. Only tools that change nothing get this.
+READ_ONLY = {"readOnlyHint": True}
+
 mcp = FastMCP(
     name="mcp-gitlab-crunchtools",
-    version="0.4.1",
+    version="0.5.0",
     instructions=(
         "Secure MCP server for GitLab projects, merge requests, issues, "
         "pipelines, and search. Works with any GitLab instance."
@@ -86,7 +90,7 @@ mcp = FastMCP(
 )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_projects_tool(
     *,
     search: str | None = None,
@@ -125,7 +129,7 @@ async def list_projects_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_project_tool(
     project_id: str,
 ) -> dict[str, Any]:
@@ -140,7 +144,7 @@ async def get_project_tool(
     return await get_project(project_id=project_id)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_project_branches_tool(
     project_id: str,
     search: str | None = None,
@@ -163,7 +167,7 @@ async def list_project_branches_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_project_branch_tool(
     project_id: str,
     branch: str,
@@ -180,7 +184,7 @@ async def get_project_branch_tool(
     return await get_project_branch(project_id=project_id, branch=branch)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_project_commits_tool(
     *,
     project_id: str,
@@ -260,7 +264,7 @@ async def delete_project_tool(
     return await delete_project(project_id=project_id)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_groups_tool(
     *,
     search: str | None = None,
@@ -296,7 +300,7 @@ async def list_groups_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_group_tool(
     group_id: str,
     with_projects: bool = True,
@@ -313,7 +317,7 @@ async def get_group_tool(
     return await get_group(group_id=group_id, with_projects=with_projects)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_group_projects_tool(
     *,
     group_id: str,
@@ -352,7 +356,7 @@ async def list_group_projects_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_merge_requests_tool(
     *,
     project_id: str,
@@ -394,7 +398,7 @@ async def list_merge_requests_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_merge_request_tool(
     project_id: str,
     merge_request_iid: int,
@@ -504,7 +508,7 @@ async def update_merge_request_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_mr_notes_tool(
     *,
     project_id: str,
@@ -558,7 +562,7 @@ async def create_mr_note_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_mr_changes_tool(
     project_id: str,
     merge_request_iid: int,
@@ -575,7 +579,7 @@ async def get_mr_changes_tool(
     return await get_mr_changes(project_id=project_id, merge_request_iid=merge_request_iid)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_mr_discussions_tool(
     project_id: str,
     merge_request_iid: int,
@@ -624,7 +628,7 @@ async def create_mr_discussion_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_issues_tool(
     *,
     project_id: str,
@@ -669,7 +673,7 @@ async def list_issues_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_issue_tool(
     project_id: str,
     issue_iid: int,
@@ -764,7 +768,7 @@ async def update_issue_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_issue_notes_tool(
     *,
     project_id: str,
@@ -816,7 +820,7 @@ async def create_issue_note_tool(
     return await create_issue_note(project_id=project_id, issue_iid=issue_iid, body=body)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_pipelines_tool(
     *,
     project_id: str,
@@ -853,7 +857,7 @@ async def list_pipelines_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_pipeline_tool(
     project_id: str,
     pipeline_id: int,
@@ -870,7 +874,7 @@ async def get_pipeline_tool(
     return await get_pipeline(project_id=project_id, pipeline_id=pipeline_id)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_pipeline_jobs_tool(
     project_id: str,
     pipeline_id: int,
@@ -900,7 +904,7 @@ async def list_pipeline_jobs_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_job_log_tool(
     project_id: str,
     job_id: int,
@@ -1036,7 +1040,7 @@ async def delete_job_tool(
     return await delete_job(project_id=project_id, job_id=job_id)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def search_global_tool(
     search: str,
     scope: str = "projects",
@@ -1058,7 +1062,7 @@ async def search_global_tool(
     return await search_global(search=search, scope=scope, page=page, per_page=per_page)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def search_project_tool(
     project_id: str,
     search: str,
@@ -1084,7 +1088,7 @@ async def search_project_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_repository_tree_tool(
     *,
     project_id: str,
@@ -1117,7 +1121,7 @@ async def list_repository_tree_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_file_tool(
     project_id: str,
     file_path: str,
@@ -1240,7 +1244,7 @@ async def delete_branch_tool(
     return await delete_branch(project_id=project_id, branch=branch)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def compare_branches_tool(
     project_id: str,
     from_ref: str,
@@ -1266,7 +1270,7 @@ async def compare_branches_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_labels_tool(
     project_id: str,
     search: str | None = None,
@@ -1371,7 +1375,7 @@ async def delete_label_tool(
     return await delete_label(project_id=project_id, label_id=label_id)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_current_user_tool() -> dict[str, Any]:
     """Get the currently authenticated GitLab user.
 
@@ -1381,7 +1385,7 @@ async def get_current_user_tool() -> dict[str, Any]:
     return await get_current_user()
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_users_tool(
     search: str | None = None,
     username: str | None = None,
@@ -1410,7 +1414,7 @@ async def list_users_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_user_tool(
     user_id: int,
 ) -> dict[str, Any]:
@@ -1425,7 +1429,7 @@ async def get_user_tool(
     return await get_user(user_id=user_id)
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_releases_tool(
     project_id: str,
     order_by: str = "released_at",
@@ -1454,7 +1458,7 @@ async def list_releases_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_release_tool(
     project_id: str,
     tag_name: str,
@@ -1504,7 +1508,7 @@ async def create_release_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_milestones_tool(
     project_id: str,
     state: str = "active",
@@ -1598,7 +1602,7 @@ async def update_milestone_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_wiki_pages_tool(
     project_id: str,
     with_content: bool = False,
@@ -1624,7 +1628,7 @@ async def list_wiki_pages_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def get_wiki_page_tool(
     project_id: str,
     slug: str,
@@ -1667,7 +1671,7 @@ async def create_wiki_page_tool(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 async def list_snippets_tool(
     project_id: str,
     page: int = 1,
