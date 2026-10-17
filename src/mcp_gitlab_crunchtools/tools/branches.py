@@ -4,10 +4,9 @@ Tools for creating, deleting, and comparing GitLab repository branches.
 """
 
 from typing import Any
-from urllib.parse import quote
 
 from ..client import get_client
-from ..models import encode_project_id
+from ..models import encode_path_segment, encode_project_id
 
 
 async def create_branch(
@@ -48,10 +47,8 @@ async def delete_branch(
     """
     client = get_client()
     encoded_id = encode_project_id(project_id)
-    encoded_branch = quote(branch, safe="")
-    return await client.delete(
-        f"/projects/{encoded_id}/repository/branches/{encoded_branch}"
-    )
+    encoded_branch = encode_path_segment(branch)
+    return await client.delete(f"/projects/{encoded_id}/repository/branches/{encoded_branch}")
 
 
 async def compare_branches(
@@ -81,6 +78,4 @@ async def compare_branches(
     if straight:
         params["straight"] = "true"
 
-    return await client.get(
-        f"/projects/{encoded_id}/repository/compare", params=params
-    )
+    return await client.get(f"/projects/{encoded_id}/repository/compare", params=params)

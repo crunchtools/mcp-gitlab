@@ -8,6 +8,14 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+### Fixed
+
+- Every integer ID parameter registered in `server.py` publishes `ge=1`, so a
+  gateway can prove `0` and negative IDs invalid (crunchtools/constitution#35).
+- `get_project_branch` and `get_release` URL-encode the branch and tag name, so
+  a name containing `/` no longer hits the wrong endpoint. `delete_branch` uses
+  the same new `encode_path_segment` helper.
+
 ## [0.5.0] - 2026-10-10
 
 ### Added

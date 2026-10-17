@@ -12,10 +12,20 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 PROJECT_ID_NUMERIC = re.compile(r"^\d+$")
 PROJECT_PATH_PATTERN = re.compile(r"^[a-zA-Z0-9\-_./]+$")
 
-SEARCH_SCOPES = frozenset({
-    "projects", "issues", "merge_requests", "milestones",
-    "snippet_titles", "wiki_blobs", "commits", "blobs", "notes", "users",
-})
+SEARCH_SCOPES = frozenset(
+    {
+        "projects",
+        "issues",
+        "merge_requests",
+        "milestones",
+        "snippet_titles",
+        "wiki_blobs",
+        "commits",
+        "blobs",
+        "notes",
+        "users",
+    }
+)
 
 PROJECT_VISIBILITIES = frozenset({"public", "internal", "private"})
 
@@ -23,10 +33,21 @@ MR_STATES = frozenset({"opened", "closed", "merged", "all"})
 
 ISSUE_STATES = frozenset({"opened", "closed", "all"})
 
-PIPELINE_STATUSES = frozenset({
-    "created", "waiting_for_resource", "preparing", "pending",
-    "running", "success", "failed", "canceled", "skipped", "manual", "scheduled",
-})
+PIPELINE_STATUSES = frozenset(
+    {
+        "created",
+        "waiting_for_resource",
+        "preparing",
+        "pending",
+        "running",
+        "success",
+        "failed",
+        "canceled",
+        "skipped",
+        "manual",
+        "scheduled",
+    }
+)
 
 MAX_PROJECT_NAME_LENGTH = 255
 MAX_TITLE_LENGTH = 500
@@ -67,6 +88,23 @@ def encode_project_id(project_id: str) -> str:
     return quote(project_id, safe="")
 
 
+def encode_path_segment(value: str) -> str:
+    """Encode a branch or tag name for use as a single URL path segment.
+
+    Slashes are percent-encoded so names like 'feature/x' stay in one segment.
+
+    Raises:
+        ValueError: If the value is empty
+    """
+    if not value or not value.strip():
+        raise ValueError("name must not be empty")
+
+    if value in (".", ".."):
+        raise ValueError("name must not be a dot-segment ('.' or '..')")
+
+    return quote(value, safe="")
+
+
 def encode_group_id(group_id: str) -> str:
     """Validate and encode a group identifier for URL use.
 
@@ -101,9 +139,7 @@ class CreateIssueInput(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(
-        ..., min_length=1, max_length=MAX_TITLE_LENGTH, description="Issue title"
-    )
+    title: str = Field(..., min_length=1, max_length=MAX_TITLE_LENGTH, description="Issue title")
     description: str | None = Field(
         default=None, max_length=MAX_DESCRIPTION_LENGTH, description="Issue description (Markdown)"
     )
@@ -113,12 +149,8 @@ class CreateIssueInput(BaseModel):
     assignee_ids: list[int] | None = Field(
         default=None, max_length=MAX_ASSIGNEES, description="User IDs to assign"
     )
-    milestone_id: int | None = Field(
-        default=None, description="Milestone ID"
-    )
-    confidential: bool = Field(
-        default=False, description="Whether the issue is confidential"
-    )
+    milestone_id: int | None = Field(default=None, description="Milestone ID")
+    confidential: bool = Field(default=False, description="Whether the issue is confidential")
 
 
 class UpdateIssueInput(BaseModel):
@@ -135,18 +167,12 @@ class UpdateIssueInput(BaseModel):
     labels: str | None = Field(
         default=None, max_length=MAX_LABELS_LENGTH, description="Comma-separated label names"
     )
-    state_event: str | None = Field(
-        default=None, description="State transition: close or reopen"
-    )
+    state_event: str | None = Field(default=None, description="State transition: close or reopen")
     assignee_ids: list[int] | None = Field(
         default=None, max_length=MAX_ASSIGNEES, description="User IDs to assign"
     )
-    milestone_id: int | None = Field(
-        default=None, description="Milestone ID"
-    )
-    confidential: bool | None = Field(
-        default=None, description="Whether the issue is confidential"
-    )
+    milestone_id: int | None = Field(default=None, description="Milestone ID")
+    confidential: bool | None = Field(default=None, description="Whether the issue is confidential")
 
     @field_validator("state_event")
     @classmethod
@@ -170,9 +196,7 @@ class CreateProjectInput(BaseModel):
     visibility: str = Field(
         default="private", description="Visibility level (public, internal, private)"
     )
-    initialize_with_readme: bool = Field(
-        default=False, description="Initialize with a README file"
-    )
+    initialize_with_readme: bool = Field(default=False, description="Initialize with a README file")
     namespace_id: int | None = Field(
         default=None, description="Namespace ID to create the project under (group or user)"
     )
@@ -198,9 +222,7 @@ class CreateMergeRequestInput(BaseModel):
     target_branch: str = Field(
         ..., min_length=1, max_length=MAX_BRANCH_LENGTH, description="Target branch name"
     )
-    title: str = Field(
-        ..., min_length=1, max_length=MAX_TITLE_LENGTH, description="MR title"
-    )
+    title: str = Field(..., min_length=1, max_length=MAX_TITLE_LENGTH, description="MR title")
     description: str | None = Field(
         default=None, max_length=MAX_DESCRIPTION_LENGTH, description="MR description (Markdown)"
     )
@@ -213,9 +235,7 @@ class CreateMergeRequestInput(BaseModel):
     reviewer_ids: list[int] | None = Field(
         default=None, max_length=MAX_ASSIGNEES, description="User IDs to review"
     )
-    milestone_id: int | None = Field(
-        default=None, description="Milestone ID"
-    )
+    milestone_id: int | None = Field(default=None, description="Milestone ID")
     remove_source_branch: bool = Field(
         default=False, description="Remove source branch after merge"
     )
@@ -235,18 +255,14 @@ class UpdateMergeRequestInput(BaseModel):
     labels: str | None = Field(
         default=None, max_length=MAX_LABELS_LENGTH, description="Comma-separated label names"
     )
-    state_event: str | None = Field(
-        default=None, description="State transition: close or reopen"
-    )
+    state_event: str | None = Field(default=None, description="State transition: close or reopen")
     assignee_ids: list[int] | None = Field(
         default=None, max_length=MAX_ASSIGNEES, description="User IDs to assign"
     )
     reviewer_ids: list[int] | None = Field(
         default=None, max_length=MAX_ASSIGNEES, description="User IDs to review"
     )
-    milestone_id: int | None = Field(
-        default=None, description="Milestone ID"
-    )
+    milestone_id: int | None = Field(default=None, description="Milestone ID")
     target_branch: str | None = Field(
         default=None, min_length=1, max_length=MAX_BRANCH_LENGTH, description="Target branch"
     )

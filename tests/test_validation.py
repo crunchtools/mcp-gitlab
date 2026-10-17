@@ -9,8 +9,40 @@ from mcp_gitlab_crunchtools.models import (
     UpdateIssueInput,
     UpdateMergeRequestInput,
     encode_group_id,
+    encode_path_segment,
     encode_project_id,
 )
+
+
+class TestPathSegmentEncoding:
+    """Tests for branch and tag name encoding."""
+
+    def test_plain_name(self) -> None:
+        """A name without special characters is unchanged."""
+        assert encode_path_segment("main") == "main"
+
+    def test_slash_is_encoded(self) -> None:
+        """Slashes must not split the name into several path segments."""
+        assert encode_path_segment("feature/login") == "feature%2Flogin"
+
+    def test_other_reserved_characters(self) -> None:
+        """Characters such as '?' and '#' are encoded too."""
+        assert encode_path_segment("a?b#c") == "a%3Fb%23c"
+
+    def test_empty_string(self) -> None:
+        """Empty or blank names fail."""
+        with pytest.raises(ValueError, match="must not be empty"):
+            encode_path_segment("  ")
+
+    @pytest.mark.parametrize("value", [".", ".."])
+    def test_dot_segments_rejected(self, value: str) -> None:
+        """'.' and '..' would be resolved as path traversal, so they fail."""
+        with pytest.raises(ValueError, match="dot-segment"):
+            encode_path_segment(value)
+
+    def test_dots_inside_name_allowed(self) -> None:
+        """Names that merely contain dots are still encoded normally."""
+        assert encode_path_segment("v1.0..2") == "v1.0..2"
 
 
 class TestProjectIdEncoding:
