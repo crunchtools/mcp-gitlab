@@ -99,6 +99,9 @@ def encode_path_segment(value: str) -> str:
     if not value or not value.strip():
         raise ValueError("name must not be empty")
 
+    if value in (".", ".."):
+        raise ValueError("name must not be a dot-segment ('.' or '..')")
+
     return quote(value, safe="")
 
 
