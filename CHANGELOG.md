@@ -8,6 +8,8 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-17
+
 ### Fixed
 
 - Every integer ID parameter registered in `server.py` publishes `ge=1`, so a
