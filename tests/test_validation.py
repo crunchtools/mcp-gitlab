@@ -34,6 +34,16 @@ class TestPathSegmentEncoding:
         with pytest.raises(ValueError, match="must not be empty"):
             encode_path_segment("  ")
 
+    @pytest.mark.parametrize("value", [".", ".."])
+    def test_dot_segments_rejected(self, value: str) -> None:
+        """'.' and '..' would be resolved as path traversal, so they fail."""
+        with pytest.raises(ValueError, match="dot-segment"):
+            encode_path_segment(value)
+
+    def test_dots_inside_name_allowed(self) -> None:
+        """Names that merely contain dots are still encoded normally."""
+        assert encode_path_segment("v1.0..2") == "v1.0..2"
+
 
 class TestProjectIdEncoding:
     """Tests for project ID validation and encoding."""
