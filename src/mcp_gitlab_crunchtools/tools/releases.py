@@ -6,7 +6,7 @@ Tools for managing GitLab project releases.
 from typing import Any
 
 from ..client import get_client
-from ..models import encode_project_id
+from ..models import encode_path_segment, encode_project_id
 
 
 async def list_releases(
@@ -56,7 +56,7 @@ async def get_release(
     """
     client = get_client()
     encoded_id = encode_project_id(project_id)
-    return await client.get(f"/projects/{encoded_id}/releases/{tag_name}")
+    return await client.get(f"/projects/{encoded_id}/releases/{encode_path_segment(tag_name)}")
 
 
 async def create_release(

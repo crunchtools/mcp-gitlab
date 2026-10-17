@@ -4,9 +4,10 @@ This module creates and configures the MCP server with all tools.
 """
 
 import logging
-from typing import Any
+from typing import Annotated, Any
 
 from fastmcp import FastMCP
+from pydantic import Field
 
 from .tools import (
     cancel_job,
@@ -75,6 +76,9 @@ from .tools import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Published as ge=1 in the tool schema so 0 and negative IDs are provably invalid.
+PositiveId = Annotated[int, Field(ge=1)]
 
 # A gateway drops an invalid optional argument only on a tool annotated read-only;
 # on anything else it refuses the call. Only tools that change nothing get this.
@@ -226,7 +230,7 @@ async def create_project_tool(
     description: str | None = None,
     visibility: str = "private",
     initialize_with_readme: bool = False,
-    namespace_id: int | None = None,
+    namespace_id: PositiveId | None = None,
 ) -> dict[str, Any]:
     """Create a new GitLab project.
 
@@ -401,7 +405,7 @@ async def list_merge_requests_tool(
 @mcp.tool(annotations=READ_ONLY)
 async def get_merge_request_tool(
     project_id: str,
-    merge_request_iid: int,
+    merge_request_iid: PositiveId,
 ) -> dict[str, Any]:
     """Get a single merge request by its IID.
 
@@ -424,9 +428,9 @@ async def create_merge_request_tool(
     title: str,
     description: str | None = None,
     labels: str | None = None,
-    assignee_ids: list[int] | None = None,
-    reviewer_ids: list[int] | None = None,
-    milestone_id: int | None = None,
+    assignee_ids: list[PositiveId] | None = None,
+    reviewer_ids: list[PositiveId] | None = None,
+    milestone_id: PositiveId | None = None,
     remove_source_branch: bool = False,
 ) -> dict[str, Any]:
     """Create a new merge request.
@@ -464,14 +468,14 @@ async def create_merge_request_tool(
 async def update_merge_request_tool(
     *,
     project_id: str,
-    merge_request_iid: int,
+    merge_request_iid: PositiveId,
     title: str | None = None,
     description: str | None = None,
     labels: str | None = None,
     state_event: str | None = None,
-    assignee_ids: list[int] | None = None,
-    reviewer_ids: list[int] | None = None,
-    milestone_id: int | None = None,
+    assignee_ids: list[PositiveId] | None = None,
+    reviewer_ids: list[PositiveId] | None = None,
+    milestone_id: PositiveId | None = None,
     target_branch: str | None = None,
     remove_source_branch: bool | None = None,
 ) -> dict[str, Any]:
@@ -512,7 +516,7 @@ async def update_merge_request_tool(
 async def list_mr_notes_tool(
     *,
     project_id: str,
-    merge_request_iid: int,
+    merge_request_iid: PositiveId,
     order_by: str = "created_at",
     sort: str = "desc",
     page: int = 1,
@@ -544,7 +548,7 @@ async def list_mr_notes_tool(
 @mcp.tool()
 async def create_mr_note_tool(
     project_id: str,
-    merge_request_iid: int,
+    merge_request_iid: PositiveId,
     body: str,
 ) -> dict[str, Any]:
     """Create a note (comment) on a merge request.
@@ -565,7 +569,7 @@ async def create_mr_note_tool(
 @mcp.tool(annotations=READ_ONLY)
 async def get_mr_changes_tool(
     project_id: str,
-    merge_request_iid: int,
+    merge_request_iid: PositiveId,
 ) -> dict[str, Any]:
     """Get the changes (diff) for a merge request.
 
@@ -582,7 +586,7 @@ async def get_mr_changes_tool(
 @mcp.tool(annotations=READ_ONLY)
 async def list_mr_discussions_tool(
     project_id: str,
-    merge_request_iid: int,
+    merge_request_iid: PositiveId,
     page: int = 1,
     per_page: int = 20,
 ) -> dict[str, Any]:
@@ -610,7 +614,7 @@ async def list_mr_discussions_tool(
 @mcp.tool()
 async def create_mr_discussion_tool(
     project_id: str,
-    merge_request_iid: int,
+    merge_request_iid: PositiveId,
     body: str,
 ) -> dict[str, Any]:
     """Create a new discussion on a merge request.
@@ -638,7 +642,7 @@ async def list_issues_tool(
     labels: str | None = None,
     milestone: str | None = None,
     search: str | None = None,
-    assignee_id: int | None = None,
+    assignee_id: PositiveId | None = None,
     page: int = 1,
     per_page: int = 20,
 ) -> dict[str, Any]:
@@ -676,7 +680,7 @@ async def list_issues_tool(
 @mcp.tool(annotations=READ_ONLY)
 async def get_issue_tool(
     project_id: str,
-    issue_iid: int,
+    issue_iid: PositiveId,
 ) -> dict[str, Any]:
     """Get a single issue by its IID.
 
@@ -697,8 +701,8 @@ async def create_issue_tool(
     title: str,
     description: str | None = None,
     labels: str | None = None,
-    assignee_ids: list[int] | None = None,
-    milestone_id: int | None = None,
+    assignee_ids: list[PositiveId] | None = None,
+    milestone_id: PositiveId | None = None,
     confidential: bool = False,
 ) -> dict[str, Any]:
     """Create a new issue in a GitLab project.
@@ -730,13 +734,13 @@ async def create_issue_tool(
 async def update_issue_tool(
     *,
     project_id: str,
-    issue_iid: int,
+    issue_iid: PositiveId,
     title: str | None = None,
     description: str | None = None,
     labels: str | None = None,
     state_event: str | None = None,
-    assignee_ids: list[int] | None = None,
-    milestone_id: int | None = None,
+    assignee_ids: list[PositiveId] | None = None,
+    milestone_id: PositiveId | None = None,
     confidential: bool | None = None,
 ) -> dict[str, Any]:
     """Update an existing issue.
@@ -772,7 +776,7 @@ async def update_issue_tool(
 async def list_issue_notes_tool(
     *,
     project_id: str,
-    issue_iid: int,
+    issue_iid: PositiveId,
     order_by: str = "created_at",
     sort: str = "desc",
     page: int = 1,
@@ -804,7 +808,7 @@ async def list_issue_notes_tool(
 @mcp.tool()
 async def create_issue_note_tool(
     project_id: str,
-    issue_iid: int,
+    issue_iid: PositiveId,
     body: str,
 ) -> dict[str, Any]:
     """Create a note (comment) on an issue.
@@ -860,7 +864,7 @@ async def list_pipelines_tool(
 @mcp.tool(annotations=READ_ONLY)
 async def get_pipeline_tool(
     project_id: str,
-    pipeline_id: int,
+    pipeline_id: PositiveId,
 ) -> dict[str, Any]:
     """Get a single CI/CD pipeline by ID.
 
@@ -877,7 +881,7 @@ async def get_pipeline_tool(
 @mcp.tool(annotations=READ_ONLY)
 async def list_pipeline_jobs_tool(
     project_id: str,
-    pipeline_id: int,
+    pipeline_id: PositiveId,
     scope: str | None = None,
     page: int = 1,
     per_page: int = 20,
@@ -907,7 +911,7 @@ async def list_pipeline_jobs_tool(
 @mcp.tool(annotations=READ_ONLY)
 async def get_job_log_tool(
     project_id: str,
-    job_id: int,
+    job_id: PositiveId,
 ) -> dict[str, Any]:
     """Get the log (trace) output of a CI/CD job.
 
@@ -941,7 +945,7 @@ async def create_pipeline_tool(
 @mcp.tool()
 async def retry_pipeline_tool(
     project_id: str,
-    pipeline_id: int,
+    pipeline_id: PositiveId,
 ) -> dict[str, Any]:
     """Retry all failed jobs in a CI/CD pipeline.
 
@@ -958,7 +962,7 @@ async def retry_pipeline_tool(
 @mcp.tool()
 async def cancel_pipeline_tool(
     project_id: str,
-    pipeline_id: int,
+    pipeline_id: PositiveId,
 ) -> dict[str, Any]:
     """Cancel a running CI/CD pipeline.
 
@@ -975,7 +979,7 @@ async def cancel_pipeline_tool(
 @mcp.tool()
 async def delete_pipeline_tool(
     project_id: str,
-    pipeline_id: int,
+    pipeline_id: PositiveId,
 ) -> dict[str, Any]:
     """Delete a CI/CD pipeline and all its jobs permanently.
 
@@ -992,7 +996,7 @@ async def delete_pipeline_tool(
 @mcp.tool()
 async def retry_job_tool(
     project_id: str,
-    job_id: int,
+    job_id: PositiveId,
 ) -> dict[str, Any]:
     """Retry a specific failed CI/CD job.
 
@@ -1009,7 +1013,7 @@ async def retry_job_tool(
 @mcp.tool()
 async def cancel_job_tool(
     project_id: str,
-    job_id: int,
+    job_id: PositiveId,
 ) -> dict[str, Any]:
     """Cancel a running CI/CD job.
 
@@ -1026,7 +1030,7 @@ async def cancel_job_tool(
 @mcp.tool()
 async def delete_job_tool(
     project_id: str,
-    job_id: int,
+    job_id: PositiveId,
 ) -> dict[str, Any]:
     """Delete a CI/CD job's artifacts and trace log.
 
@@ -1329,7 +1333,7 @@ async def create_label_tool(
 async def update_label_tool(
     *,
     project_id: str,
-    label_id: int,
+    label_id: PositiveId,
     new_name: str | None = None,
     color: str | None = None,
     description: str | None = None,
@@ -1361,7 +1365,7 @@ async def update_label_tool(
 @mcp.tool()
 async def delete_label_tool(
     project_id: str,
-    label_id: int,
+    label_id: PositiveId,
 ) -> dict[str, Any]:
     """Delete a label from a GitLab project.
 
@@ -1416,7 +1420,7 @@ async def list_users_tool(
 
 @mcp.tool(annotations=READ_ONLY)
 async def get_user_tool(
-    user_id: int,
+    user_id: PositiveId,
 ) -> dict[str, Any]:
     """Get a specific GitLab user by ID.
 
@@ -1570,7 +1574,7 @@ async def create_milestone_tool(
 async def update_milestone_tool(
     *,
     project_id: str,
-    milestone_id: int,
+    milestone_id: PositiveId,
     title: str | None = None,
     description: str | None = None,
     due_date: str | None = None,

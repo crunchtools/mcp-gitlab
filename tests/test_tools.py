@@ -182,6 +182,30 @@ class TestReadOnlyAnnotation:
             assert call.kwargs["json"] is None
 
 
+class TestIdSchema:
+    """Integer ID parameters publish ge=1 in the registered schema."""
+
+    @pytest.mark.asyncio
+    async def test_integer_ids_have_minimum_one(self) -> None:
+        """Every ID-like integer parameter, bare, optional or in a list, is >= 1."""
+        offenders = []
+        checked = 0
+        for tool in await mcp.list_tools():
+            for name, prop in tool.parameters.get("properties", {}).items():
+                if not (name.endswith(("_id", "_iid", "_ids")) and name != "project_id"):
+                    continue
+                branches = prop.get("anyOf", [prop])
+                for branch in branches:
+                    schema = branch["items"] if branch.get("type") == "array" else branch
+                    if schema.get("type") != "integer":
+                        continue
+                    checked += 1
+                    if schema.get("minimum") != 1:
+                        offenders.append(f"{tool.name}.{name}")
+        assert checked > 0
+        assert offenders == []
+
+
 class TestErrorSafety:
     """Tests to verify error messages don't leak sensitive data."""
 
@@ -1119,6 +1143,28 @@ class TestReleaseTools:
             result = await get_release(project_id="1", tag_name="v1.0.0")
 
         assert result["description"] == "First release"
+
+    @pytest.mark.asyncio
+    async def test_get_release_encodes_tag_with_slash(self) -> None:
+        """A tag name containing '/' stays in one path segment."""
+        from mcp_gitlab_crunchtools.tools import get_release
+
+        with _patch_client(_mock_response(json_data={"tag_name": "rel/1"})) as client_cls:
+            await get_release(project_id="1", tag_name="rel/1.0")
+
+        url = client_cls.return_value.request.await_args.kwargs["url"]
+        assert url.endswith("/projects/1/releases/rel%2F1.0")
+
+    @pytest.mark.asyncio
+    async def test_get_project_branch_encodes_branch_with_slash(self) -> None:
+        """A branch name containing '/' stays in one path segment."""
+        from mcp_gitlab_crunchtools.tools import get_project_branch
+
+        with _patch_client(_mock_response(json_data={"name": "feature/x"})) as client_cls:
+            await get_project_branch(project_id="1", branch="feature/x")
+
+        url = client_cls.return_value.request.await_args.kwargs["url"]
+        assert url.endswith("/projects/1/repository/branches/feature%2Fx")
 
     @pytest.mark.asyncio
     async def test_create_release(self) -> None:

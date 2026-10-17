@@ -7,7 +7,7 @@ branches, and commits.
 from typing import Any
 
 from ..client import get_client
-from ..models import CreateProjectInput, encode_project_id
+from ..models import CreateProjectInput, encode_path_segment, encode_project_id
 
 
 async def list_projects(
@@ -119,7 +119,9 @@ async def get_project_branch(
     """
     client = get_client()
     encoded_id = encode_project_id(project_id)
-    return await client.get(f"/projects/{encoded_id}/repository/branches/{branch}")
+    return await client.get(
+        f"/projects/{encoded_id}/repository/branches/{encode_path_segment(branch)}"
+    )
 
 
 async def list_project_commits(
