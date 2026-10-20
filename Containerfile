@@ -13,7 +13,7 @@
 #     -- podman run -i --rm -e GITLAB_TOKEN quay.io/crunchtools/mcp-gitlab
 
 # Stage 1: Builder (has shell, dnf, build tools)
-FROM quay.io/hummingbird/python:latest-builder AS builder
+FROM quay.io/hummingbird/python:3.14-builder AS builder
 USER 0
 WORKDIR /app
 RUN python3 -m venv /app/venv
@@ -23,7 +23,7 @@ COPY src/ ./src/
 RUN pip install --no-cache-dir .
 
 # Stage 2: Runtime (distroless — no shell, no package manager)
-FROM quay.io/hummingbird/python:latest
+FROM quay.io/hummingbird/python:3.14
 
 # Labels for container metadata
 LABEL name="mcp-gitlab-crunchtools" \
