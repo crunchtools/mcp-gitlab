@@ -8,6 +8,11 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+### Changed
+
+- Container base images pinned to `quay.io/hummingbird/python:3.14*` instead of
+  `latest`, which moved to Python 3.15.0 on 2026-10-20 (crunchtools/constitution#66).
+
 ## [0.5.1] - 2026-10-17
 
 ### Fixed
