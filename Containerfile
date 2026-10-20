@@ -27,7 +27,7 @@ FROM quay.io/hummingbird/python:3.14
 
 # Labels for container metadata
 LABEL name="mcp-gitlab-crunchtools" \
-      version="0.5.1" \
+      version="0.6.0" \
       summary="Secure MCP server for GitLab projects, merge requests, issues, and pipelines" \
       description="A security-focused MCP server for GitLab built on Hummingbird" \
       maintainer="crunchtools.com" \
