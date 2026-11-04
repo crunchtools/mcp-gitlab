@@ -47,3 +47,14 @@ check = "EV002-manifest_lint_suppression"
 path = "pyproject.toml"
 justification = "Each remaining global ruff ignore was verified against this codebase with the project's own pinned toolchain (`uv run ruff check --select <RULE>`, ignore list temporarily cleared for an unmasked read) before being kept: TRY003 (6 src/ files, GitLab API error messages), PLR0913 (11 src/ files -- nearly every tools/ module -- MCP tool signatures mirror the wire API and genuinely take many named parameters), PLR2004 (client.py plus tests, HTTP status/size comparisons), PLW0603 (client.py + config.py, module-level lazy singletons), TID252 (14 src/ files, this package's own internal relative imports). Two previously-global entries with zero hits anywhere (PLR0917, S106) or fixable outright (PIE790: one redundant `pass` removed from errors.py; RUF022: unsorted `__all__` in tools/__init__.py) were resolved with `ruff check --fix` instead of kept ignored. S101 (assert), S105 (a literal secret value in test fixtures), and PLC0415 (importing the module/fixture under test inside the test body) were moved from the global ignore into `[tool.ruff.lint.per-file-ignores]` for tests/* -- all three fire only in tests/, never in src/."
 classification = "by_design"
+
+# Ruff is not missing; it moved. Gourmand's IF001 looks for a literal
+# `ruff-check` hook id, and under python-sdlc (constitution XII, v1.30.0) ruff
+# runs inside the `sdlc-commit` hook, configured by [tool.ruff] in
+# pyproject.toml. Same precedent as trentina.
+[[exceptions]]
+check = "linter_configuration"
+path = ".pre-commit-config.yaml"
+pattern = "ruff-check"
+justification = "ruff runs inside the sdlc-commit hook from python-sdlc (constitution XII v1.30.0), configured by [tool.ruff] in pyproject.toml; Gourmand looks for a literal ruff hook id"
+classification = "by_design"

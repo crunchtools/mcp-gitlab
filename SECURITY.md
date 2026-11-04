@@ -81,6 +81,7 @@ The API token is handled with multiple protections:
 ```python
 from pydantic import SecretStr
 
+
 class Config:
     def __init__(self):
         token = os.environ.get("GITLAB_TOKEN")

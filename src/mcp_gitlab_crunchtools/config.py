@@ -47,9 +47,7 @@ class Config:
             )
 
         if parsed.scheme != "https" and parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
-            raise ConfigurationError(
-                "GITLAB_URL must use HTTPS for non-localhost URLs"
-            )
+            raise ConfigurationError("GITLAB_URL must use HTTPS for non-localhost URLs")
 
         self._base_url = gitlab_url
 

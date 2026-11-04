@@ -38,9 +38,7 @@ async def list_wiki_pages(
     if with_content:
         params["with_content"] = "1"
 
-    return await client.get(
-        f"/projects/{encoded_id}/wikis", params=params
-    )
+    return await client.get(f"/projects/{encoded_id}/wikis", params=params)
 
 
 async def get_wiki_page(

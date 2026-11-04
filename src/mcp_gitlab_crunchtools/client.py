@@ -116,9 +116,7 @@ class GitLabClient:
         try:
             parsed = response.json()
         except ValueError as e:
-            raise GitLabApiError(
-                response.status_code, f"Invalid JSON response: {e}"
-            ) from e
+            raise GitLabApiError(response.status_code, f"Invalid JSON response: {e}") from e
 
         if isinstance(parsed, list):
             return self._wrap_list_response(parsed, response)
@@ -127,9 +125,7 @@ class GitLabClient:
             return parsed
         return {"data": parsed}
 
-    def _wrap_list_response(
-        self, items: list[Any], response: httpx.Response
-    ) -> dict[str, Any]:
+    def _wrap_list_response(self, items: list[Any], response: httpx.Response) -> dict[str, Any]:
         """Wrap a list response with GitLab pagination headers."""
         wrapped: dict[str, Any] = {"items": items}
 
@@ -186,10 +182,7 @@ class GitLabClient:
 
         raise GitLabApiError(status_code, error_msg)
 
-
-    async def get(
-        self, path: str, params: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    async def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """Make a GET request."""
         return await self._request("GET", path, params=params)
 
