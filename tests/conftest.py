@@ -58,5 +58,7 @@ def _patch_client(mock_response: httpx.Response):
     mock_http.request = AsyncMock(return_value=mock_response)
 
     return patch.object(
-        httpx, "AsyncClient", return_value=mock_http,
+        httpx,
+        "AsyncClient",
+        return_value=mock_http,
     )
