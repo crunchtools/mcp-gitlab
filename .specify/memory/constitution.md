@@ -2,9 +2,9 @@
 
 > **Version:** 1.1.0
 > **Ratified:** 2026-02-27
-> **Amended:** 2026-10-02
+> **Amended:** 2026-11-09
 > **Status:** Active
-> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.31.0
+> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.36.0
 > **Profile:** MCP Server
 
 This file holds what is specific to mcp-gitlab. The fleet rules and the MCP
@@ -23,7 +23,8 @@ restated here.
   allowlisted; project and group IDs must match `^[a-zA-Z0-9\-_./]+$`.
   `ProjectNotFoundError` truncates long identifiers.
 - **API:** `PRIVATE-TOKEN` header, never the URL; path parameters are
-  URL-encoded; requests time out after 30s; responses are capped at 10MB.
+  URL-encoded; requests time out after 30s; responses are capped at 10MB while
+  reading, not from the `content-length` header GitLab need not send.
 - **Surface:** pure API wrappers. No filesystem access, shell execution or
   code evaluation.
 

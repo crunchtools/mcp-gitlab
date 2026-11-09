@@ -175,9 +175,9 @@ class TestReadOnlyAnnotation:
         """A read-only tool reaches GitLab with GET or HEAD and no request body."""
         with _patch_client(_mock_response(json_data={"id": 1})) as client_cls:
             await mcp.call_tool(name, READ_ONLY_CALLS[name])
-        request = client_cls.return_value.request
-        assert request.await_count >= 1
-        for call in request.await_args_list:
+        request = client_cls.return_value.build_request
+        assert request.call_count >= 1
+        for call in request.call_args_list:
             assert call.kwargs["method"] in {"GET", "HEAD"}
             assert call.kwargs["json"] is None
 
@@ -603,7 +603,7 @@ class TestProjectTools:
 
         with _patch_client(resp) as mock_client:
             await get_project(project_id="group/my-project")
-            call_args = mock_client.return_value.request.call_args
+            call_args = mock_client.return_value.build_request.call_args
             assert "group%2Fmy-project" in call_args.kwargs.get("url", "")
 
     @pytest.mark.asyncio
@@ -1152,7 +1152,7 @@ class TestReleaseTools:
         with _patch_client(_mock_response(json_data={"tag_name": "rel/1"})) as client_cls:
             await get_release(project_id="1", tag_name="rel/1.0")
 
-        url = client_cls.return_value.request.await_args.kwargs["url"]
+        url = client_cls.return_value.build_request.call_args.kwargs["url"]
         assert url.endswith("/projects/1/releases/rel%2F1.0")
 
     @pytest.mark.asyncio
@@ -1163,7 +1163,7 @@ class TestReleaseTools:
         with _patch_client(_mock_response(json_data={"name": "feature/x"})) as client_cls:
             await get_project_branch(project_id="1", branch="feature/x")
 
-        url = client_cls.return_value.request.await_args.kwargs["url"]
+        url = client_cls.return_value.build_request.call_args.kwargs["url"]
         assert url.endswith("/projects/1/repository/branches/feature%2Fx")
 
     @pytest.mark.asyncio
