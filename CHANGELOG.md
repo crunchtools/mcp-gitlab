@@ -8,6 +8,48 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-09
+
+### Fixed
+
+- **The response ceiling is now a ceiling.** It read the `content-length`
+  header and nothing else, and that header is optional, so a reply without it
+  was read whole into memory. Bodies are read in bounded pieces now, measured
+  before each chunk is copied in: `aiter_bytes()` promises nothing about chunk
+  size, so appending first would copy in exactly the response being refused.
+
+- **An error that is not GitLab's JSON shape says what it was.** It arrived as
+  `Unknown error`, or 200 bare characters of body with no indication of where
+  they came from, so a self-hosted instance's SSO login page, a proxy error
+  and the API refusing something were one message. Such a body is now quoted,
+  bounded, alongside the method, URL, status and content-type of the request it
+  answered. GitLab's own `message`/`error` is still used verbatim when present,
+  now length-bounded.
+
+- **The URL in an error carries no secret.** Userinfo is dropped — a
+  self-hosted `GITLAB_URL` can carry credentials before the path — and
+  `private_token`, `access_token` and `token`, all of which GitLab accepts in a
+  query string, are redacted by name. By name rather than by dropping the query
+  string, because `per_page`, `state` and `ref` are the diagnosis.
+
+### Added
+
+- **The client says what it is.** Requests carry
+  `User-Agent: mcp-gitlab-crunchtools/<version> (+<repo url>)`, with the
+  version read from installed package metadata. httpx's default
+  `python-httpx/<version>` is what bot protection answers with a challenge page
+  (RT #1596).
+
+### Changed
+
+- Client tests drive `build_request` and `send` rather than `request`, because
+  the client now streams. The new `tests/test_http_contract.py` uses a real
+  `httpx.AsyncClient` over `httpx.MockTransport`, because the agent string and
+  the bounded read are the client's own behaviour.
+
+- Inherits constitution v1.36.0, whose MCP Server profile 1.8.0 states the
+  outbound HTTP contract (RT #1601).
+
 ## [0.6.1] - 2026-10-31
 
 ### Security

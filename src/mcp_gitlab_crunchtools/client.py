@@ -4,7 +4,9 @@ This module provides a secure async HTTP client for the GitLab REST API v4.
 All requests go through this client to ensure consistent security practices.
 """
 
+import json
 import logging
+from importlib.metadata import version
 from typing import Any
 
 import httpx
@@ -21,6 +23,79 @@ logger = logging.getLogger(__name__)
 
 MAX_RESPONSE_SIZE = 10 * 1024 * 1024
 REQUEST_TIMEOUT = 30.0
+BODY_SNIPPET_CHARS = 200
+ELLIPSIS = "..."
+
+# Identify this client by name. httpx otherwise sends `python-httpx/<version>`,
+# which bot protection answers with an HTML challenge page instead of the API --
+# the failure that cost an afternoon on mcp-wordpress (RT #1596). The version
+# comes from installed package metadata so it cannot drift from pyproject.toml.
+USER_AGENT = (
+    f"mcp-gitlab-crunchtools/{version('mcp-gitlab-crunchtools')} "
+    "(+https://github.com/crunchtools/mcp-gitlab)"
+)
+
+# Query parameters whose value is a secret rather than part of the request.
+# GitLab accepts `private_token` and `access_token` in a query string.
+REDACTED_PARAMS = frozenset({"access_token", "private_token", "token"})
+
+
+def _safe_url(url: httpx.URL) -> httpx.URL:
+    """A URL fit to appear in an error message (Layer 1).
+
+    Userinfo first: a self-hosted `GITLAB_URL` can carry credentials before the
+    path, where redacting query parameters never reaches them. The rest is
+    redacted by name, because `per_page`, `state` and `ref` are the diagnosis.
+    """
+    url = url.copy_with(userinfo=b"")
+    for name in REDACTED_PARAMS & set(url.params):
+        url = url.copy_set_param(name, "***")
+    return url
+
+
+def _body_snippet(body: bytes) -> str:
+    """A short, single-line excerpt of a response body, for an error message."""
+    prefix = body[: BODY_SNIPPET_CHARS * 4]
+    collapsed = " ".join(prefix.decode("utf-8", errors="replace").split())
+    if not collapsed:
+        return "<empty body>"
+    if len(collapsed) > BODY_SNIPPET_CHARS or len(body) > len(prefix):
+        return collapsed[: BODY_SNIPPET_CHARS - len(ELLIPSIS)] + ELLIPSIS
+    return collapsed
+
+
+def _error_detail(response: httpx.Response, body: bytes) -> str:
+    """GitLab's own error text, or the body quoted with the request it answered.
+
+    The fallback is what tells an SSO login page or a proxy error apart from
+    the API refusing something: neither answers with GitLab's `message`/`error`
+    shape, and before this they both arrived as "Unknown error".
+    """
+    try:
+        parsed = json.loads(body)
+    except ValueError:
+        parsed = None
+    detail = ""
+    if isinstance(parsed, dict):
+        raw = parsed.get("message", parsed.get("error"))
+        if isinstance(raw, (dict, str, int, float)):
+            detail = str(raw)[: BODY_SNIPPET_CHARS * 4]
+    elif parsed is not None:
+        detail = str(parsed)[: BODY_SNIPPET_CHARS * 4]
+    return detail or f"{_where(response)} returned {_body_snippet(body)}"
+
+
+def _where(response: httpx.Response) -> str:
+    """Which request a response answered, for an error message.
+
+    The requested URL rather than the path: `GITLAB_URL` points this client at
+    gitlab.com or at a self-hosted instance, and an instance behind an SSO
+    proxy answers with a login page that a path alone cannot describe.
+    """
+    return (
+        f"{response.request.method} {_safe_url(response.request.url)} "
+        f"(HTTP {response.status_code}, {response.headers.get('content-type', 'no content-type')})"
+    )
 
 
 class GitLabClient:
@@ -48,6 +123,7 @@ class GitLabClient:
                 headers={
                     "PRIVATE-TOKEN": self._config.token,
                     "Content-Type": "application/json",
+                    "User-Agent": USER_AGENT,
                 },
                 timeout=httpx.Timeout(REQUEST_TIMEOUT),
                 verify=self._config.ssl_verify,
@@ -88,35 +164,39 @@ class GitLabClient:
         logger.debug("API request: %s %s", method, path)
 
         try:
-            response = await client.request(
+            request = client.build_request(
                 method=method,
                 url=path,
                 params=params,
                 json=json_data,
             )
+            response = await client.send(request, stream=True)
+            try:
+                body = await self._read_capped(response)
+            finally:
+                await response.aclose()
         except httpx.TimeoutException as e:
             raise GitLabApiError(0, f"Request timeout: {e}") from e
         except httpx.RequestError as e:
             raise GitLabApiError(0, f"Request failed: {e}") from e
 
-        content_length = response.headers.get("content-length")
-        if content_length and int(content_length) > MAX_RESPONSE_SIZE:
-            raise GitLabApiError(0, "Response too large")
-
         if not response.is_success:
-            self._handle_error_response(response)
+            self._handle_error_response(response, body)
 
         if response.status_code == 204:
             return {"status": "deleted"}
 
         content_type = response.headers.get("content-type", "")
         if "text/plain" in content_type:
-            return {"content": response.text}
+            return {"content": body.decode("utf-8", errors="replace")}
 
         try:
-            parsed = response.json()
+            parsed = json.loads(body)
         except ValueError as e:
-            raise GitLabApiError(response.status_code, f"Invalid JSON response: {e}") from e
+            raise GitLabApiError(
+                response.status_code,
+                f"{_where(response)} is not JSON ({e}): {_body_snippet(body)}",
+            ) from e
 
         if isinstance(parsed, list):
             return self._wrap_list_response(parsed, response)
@@ -124,6 +204,33 @@ class GitLabClient:
         if isinstance(parsed, dict):
             return parsed
         return {"data": parsed}
+
+    @staticmethod
+    async def _read_capped(response: httpx.Response) -> bytes:
+        """Read the body, aborting as soon as it would pass MAX_RESPONSE_SIZE.
+
+        One buffer, measured before the copy: `aiter_bytes()` promises nothing
+        about chunk size -- one chunk can be the whole body -- so appending
+        first would copy in exactly the response being refused. The
+        `content-length` check this replaces was the only limit, and it is a
+        header GitLab need not send.
+        """
+        declared = response.headers.get("content-length")
+        if declared and declared.isdigit() and int(declared) > MAX_RESPONSE_SIZE:
+            raise GitLabApiError(
+                response.status_code,
+                f"{_where(response)} declared {declared} bytes, over the "
+                f"{MAX_RESPONSE_SIZE} byte limit",
+            )
+        body = bytearray()
+        async for chunk in response.aiter_bytes():
+            if len(body) + len(chunk) > MAX_RESPONSE_SIZE:
+                raise GitLabApiError(
+                    response.status_code,
+                    f"{_where(response)} sent over the {MAX_RESPONSE_SIZE} byte limit",
+                )
+            body += chunk
+        return bytes(body)
 
     def _wrap_list_response(self, items: list[Any], response: httpx.Response) -> dict[str, Any]:
         """Wrap a list response with GitLab pagination headers."""
@@ -147,28 +254,18 @@ class GitLabClient:
 
         return wrapped
 
-    def _handle_error_response(self, response: httpx.Response) -> None:
+    def _handle_error_response(self, response: httpx.Response, body: bytes) -> None:
         """Handle error responses from the API.
 
         Args:
             response: HTTP response
+            body: its bounded body, already read
 
         Raises:
             Various UserError subclasses based on error type
         """
         status_code = response.status_code
-
-        error_msg: str = "Unknown error"
-        try:
-            error_body = response.json()
-            if isinstance(error_body, dict):
-                raw_msg = error_body.get("message", error_body.get("error"))
-                if isinstance(raw_msg, (dict, str, int, float)):
-                    error_msg = str(raw_msg)
-            else:
-                error_msg = str(error_body)
-        except ValueError:
-            error_msg = response.text[:200] if response.text else "Unknown error"
+        error_msg = _error_detail(response, body)
 
         if status_code == 401:
             raise PermissionDeniedError("Valid Personal Access Token")
