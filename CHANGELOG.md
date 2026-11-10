@@ -8,6 +8,18 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-10
+
+### Fixed
+
+- **The container installs from `uv.lock`, not a fresh resolve.** `pip install
+  .` read only `pyproject.toml`, whose floors carry no upper bound, so the
+  image shipped whatever had been released that morning — a dependency set no
+  test had ever run against. A lock stage now exports the committed,
+  Dependabot-maintained lock to a requirements file and both installs use
+  `--no-deps` so pip cannot re-resolve it. Same bug as mcp-gemini (fixed in
+  PR #72, which caused a prod outage), part of RT#1564.
+
 ## [0.7.0] - 2026-11-09
 
 ### Fixed
