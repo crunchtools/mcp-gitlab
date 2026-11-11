@@ -4,7 +4,7 @@
 > **Ratified:** 2026-02-27
 > **Amended:** 2026-11-09
 > **Status:** Active
-> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.36.0
+> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.39.1
 > **Profile:** MCP Server
 
 This file holds what is specific to mcp-gitlab. The fleet rules and the MCP
