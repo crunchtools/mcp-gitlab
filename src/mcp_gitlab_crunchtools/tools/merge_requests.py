@@ -6,7 +6,7 @@ Tools for listing, creating, and updating GitLab merge requests.
 from typing import Any
 
 from ..client import get_client
-from ..errors import GitLabApiError, MergeRefusedError
+from ..errors import GitLabApiError, MergeRefusedError, PermissionDeniedError
 from ..models import (
     CreateMergeRequestInput,
     MergeMergeRequestInput,
@@ -433,6 +433,10 @@ async def merge_merge_request(
 
     try:
         result = await client.put(f"{path}/merge", json_data=payload)
+    except PermissionDeniedError as e:
+        # The GET above succeeded with this token, so a 401/403 here means
+        # the user may not merge this MR, not that the token is bad.
+        raise MergeRefusedError(merge_request_iid, "this user may not merge it") from e
     except GitLabApiError as e:
         if e.code in _MERGE_REFUSALS:
             raise MergeRefusedError(merge_request_iid, _MERGE_REFUSALS[e.code]) from e

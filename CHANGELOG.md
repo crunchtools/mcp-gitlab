@@ -8,6 +8,13 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+### Fixed
+
+- **`merge_merge_request` reports a 401 on the merge call as a refusal.**
+  GitLab answers 401 when the token is valid but the user may not merge the
+  MR; it now raises `MergeRefusedError` ("this user may not merge it") instead
+  of a bad-token permission error.
+
 ### Added
 
 - **`merge_merge_request` merges a merge request.** It calls `PUT
