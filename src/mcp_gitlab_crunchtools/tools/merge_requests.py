@@ -6,7 +6,7 @@ Tools for listing, creating, and updating GitLab merge requests.
 from typing import Any
 
 from ..client import get_client
-from ..errors import GitLabApiError, MergeRefusedError
+from ..errors import GitLabApiError, MergeRefusedError, PermissionDeniedError
 from ..models import (
     CreateMergeRequestInput,
     MergeMergeRequestInput,
@@ -367,6 +367,19 @@ async def create_mr_discussion(
     )
 
 
+def _merge_refusal(mr: dict[str, Any], sha: str) -> str | None:
+    """Why an MR, as GitLab describes it, cannot be merged at ``sha``; None if it can."""
+    if mr.get("state") != "opened":
+        return f"it is not open (state: {mr.get('state')})"
+    if mr.get("draft") or mr.get("work_in_progress"):
+        return "it is a draft"
+    if mr.get("has_conflicts"):
+        return "it has a conflict with the target branch"
+    if str(mr.get("sha", "")).lower() != sha:
+        return "the source branch head no longer matches sha"
+    return None
+
+
 async def merge_merge_request(
     *,
     project_id: str,
@@ -397,8 +410,8 @@ async def merge_merge_request(
         pydantic.ValidationError: ``sha`` is not a full 40- or 64-character
             commit ID (raised before any request).
         MergeRefusedError: the MR is a draft, has a conflict, is not open, or
-            its head is not ``sha``; or GitLab refused the merge (405, 406,
-            409 or 422).
+            its head is not ``sha``; or GitLab refused the merge (401: this
+            user may not merge it; 405, 406, 409 or 422).
         GitLabApiError: any other GitLab failure, unchanged.
     """
     validated = MergeMergeRequestInput(
@@ -412,15 +425,9 @@ async def merge_merge_request(
     encoded_id = encode_project_id(project_id)
     path = f"/projects/{encoded_id}/merge_requests/{merge_request_iid}"
 
-    mr = await client.get(path)
-    if mr.get("state") != "opened":
-        raise MergeRefusedError(merge_request_iid, f"it is not open (state: {mr.get('state')})")
-    if mr.get("draft") or mr.get("work_in_progress"):
-        raise MergeRefusedError(merge_request_iid, "it is a draft")
-    if mr.get("has_conflicts"):
-        raise MergeRefusedError(merge_request_iid, "it has a conflict with the target branch")
-    if str(mr.get("sha", "")).lower() != validated.sha:
-        raise MergeRefusedError(merge_request_iid, "the source branch head no longer matches sha")
+    refusal = _merge_refusal(await client.get(path), validated.sha)
+    if refusal:
+        raise MergeRefusedError(merge_request_iid, refusal)
 
     payload: dict[str, Any] = {
         "sha": validated.sha,
@@ -436,6 +443,14 @@ async def merge_merge_request(
     except GitLabApiError as e:
         if e.code in _MERGE_REFUSALS:
             raise MergeRefusedError(merge_request_iid, _MERGE_REFUSALS[e.code]) from e
+        raise
+    except PermissionDeniedError as e:
+        # The GET above succeeded with this token, so a 401 here is GitLab
+        # saying this user may not merge the MR, not that the token is bad.
+        if e.code == 401:
+            raise MergeRefusedError(
+                merge_request_iid, "this user is not allowed to merge it"
+            ) from e
         raise
 
     return {

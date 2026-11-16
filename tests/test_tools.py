@@ -890,6 +890,31 @@ class TestMergeMergeRequest:
         assert result["merged"] is True
 
     @pytest.mark.asyncio
+    async def test_a_401_on_the_merge_is_a_refusal_not_a_token_error(self) -> None:
+        # The GET just succeeded with this token, so a 401 on the PUT means
+        # the user may not merge this MR (GitLab's own meaning), not a bad token.
+        from mcp_gitlab_crunchtools.errors import MergeRefusedError
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        _seen, handler = _merge_server(_OPEN_MR, put_status=401)
+        with _patch_transport(handler), pytest.raises(MergeRefusedError) as raised:
+            await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
+        assert "not allowed to merge" in str(raised.value)
+        assert "Access Token" not in str(raised.value)
+
+    @pytest.mark.asyncio
+    async def test_a_401_on_the_lookup_is_still_a_token_error(self) -> None:
+        from mcp_gitlab_crunchtools.errors import PermissionDeniedError
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.method == "GET"
+            return httpx.Response(401, json={"message": "401 Unauthorized"})
+
+        with _patch_transport(handler), pytest.raises(PermissionDeniedError, match="Token"):
+            await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
+
+    @pytest.mark.asyncio
     async def test_any_other_gitlab_error_passes_through(self) -> None:
         from mcp_gitlab_crunchtools.errors import GitLabApiError, MergeRefusedError
         from mcp_gitlab_crunchtools.tools import merge_merge_request
