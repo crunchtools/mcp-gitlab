@@ -878,6 +878,17 @@ class TestMergeMergeRequest:
             await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
 
     @pytest.mark.asyncio
+    async def test_any_other_gitlab_error_passes_through(self) -> None:
+        from mcp_gitlab_crunchtools.errors import GitLabApiError, MergeRefusedError
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        _seen, handler = _merge_server(_OPEN_MR, put_status=500)
+        with _patch_transport(handler), pytest.raises(GitLabApiError) as raised:
+            await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
+        assert not isinstance(raised.value, MergeRefusedError)
+        assert raised.value.code == 500
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize("sha", ["", "abc1234", "z" * 40, SHA + "0"])
     async def test_a_sha_that_is_not_a_full_commit_id_is_refused(self, sha: str) -> None:
         from mcp_gitlab_crunchtools.tools import merge_merge_request
@@ -898,6 +909,22 @@ class TestMergeMergeRequest:
         call = client_cls.return_value.build_request.call_args
         assert call.kwargs["url"] == "/projects/1/merge_requests/5/pipelines"
         assert result["items"][0]["status"] == "success"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("page", "per_page", "sent"), [(3, 50, 50), (1, 100, 100), (2, 500, 100)]
+    )
+    async def test_get_mr_pipelines_forwards_paging(
+        self, page: int, per_page: int, sent: int
+    ) -> None:
+        from mcp_gitlab_crunchtools.tools import get_mr_pipelines
+
+        with _patch_client(_mock_response(json_data=[])) as client_cls:
+            await get_mr_pipelines(
+                project_id="1", merge_request_iid=5, page=page, per_page=per_page
+            )
+        params = client_cls.return_value.build_request.call_args.kwargs["params"]
+        assert params == {"page": page, "per_page": sent}
 
     @pytest.mark.asyncio
     async def test_get_mr_pipelines_publishes_positive_paging(self) -> None:
