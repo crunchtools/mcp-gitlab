@@ -392,6 +392,14 @@ async def merge_merge_request(
 
     Returns:
         The merge outcome: merged, or the auto-merge status
+
+    Raises:
+        pydantic.ValidationError: ``sha`` is not a full 40- or 64-character
+            commit ID (raised before any request).
+        MergeRefusedError: the MR is a draft, has a conflict, is not open, or
+            its head is not ``sha``; or GitLab refused the merge (405, 406,
+            409 or 422).
+        GitLabApiError: any other GitLab failure, unchanged.
     """
     validated = MergeMergeRequestInput(
         sha=sha,

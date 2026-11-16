@@ -878,6 +878,18 @@ class TestMergeMergeRequest:
             await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
 
     @pytest.mark.asyncio
+    async def test_a_sha256_commit_id_is_taken(self) -> None:
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        sha256 = "ab" * 32
+        mr = {**_OPEN_MR, "sha": sha256}
+        seen, handler = _merge_server(mr, put_body={**mr, "state": "merged"})
+        with _patch_transport(handler):
+            result = await merge_merge_request(project_id="1", merge_request_iid=5, sha=sha256)
+        assert json.loads(seen[-1].content)["sha"] == sha256
+        assert result["merged"] is True
+
+    @pytest.mark.asyncio
     async def test_any_other_gitlab_error_passes_through(self) -> None:
         from mcp_gitlab_crunchtools.errors import GitLabApiError, MergeRefusedError
         from mcp_gitlab_crunchtools.tools import merge_merge_request
