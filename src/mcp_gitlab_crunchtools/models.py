@@ -11,6 +11,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 PROJECT_ID_NUMERIC = re.compile(r"^\d+$")
 PROJECT_PATH_PATTERN = re.compile(r"^[a-zA-Z0-9\-_./]+$")
+# A full commit ID: SHA-1, or SHA-256 for a repository in that object format.
+COMMIT_SHA_PATTERN = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 
 SEARCH_SCOPES = frozenset(
     {
@@ -239,6 +241,25 @@ class CreateMergeRequestInput(BaseModel):
     remove_source_branch: bool = Field(
         default=False, description="Remove source branch after merge"
     )
+
+
+class MergeMergeRequestInput(BaseModel):
+    """Validated input for merging a merge request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    sha: str = Field(description="Full commit ID the source branch head must still be")
+    merge_when_pipeline_succeeds: bool = Field(default=False)
+    squash: bool | None = Field(default=None)
+    should_remove_source_branch: bool | None = Field(default=None)
+
+    @field_validator("sha")
+    @classmethod
+    def validate_sha(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not COMMIT_SHA_PATTERN.match(v):
+            raise ValueError("sha must be a full 40- or 64-character commit ID")
+        return v
 
 
 class UpdateMergeRequestInput(BaseModel):

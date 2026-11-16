@@ -6,7 +6,7 @@
 
 ## Overview
 
-mcp-gitlab-crunchtools is a secure MCP server for the GitLab REST API v4. It provides 63 tools across 13 categories for managing projects, merge requests, issues, pipelines, files, branches, labels, users, releases, milestones, wiki pages, snippets, and search. Works with any GitLab instance (gitlab.com, self-hosted, corporate).
+mcp-gitlab-crunchtools is a secure MCP server for the GitLab REST API v4. It provides 65 tools across 13 categories for managing projects, merge requests, issues, pipelines, files, branches, labels, users, releases, milestones, wiki pages, snippets, and search. Works with any GitLab instance (gitlab.com, self-hosted, corporate).
 
 ---
 
@@ -32,7 +32,7 @@ mcp-gitlab-crunchtools is a secure MCP server for the GitLab REST API v4. It pro
 | `get_group` | GET | `/groups/:id` | Get group details |
 | `list_group_projects` | GET | `/groups/:id/projects` | List group projects |
 
-### Merge Requests (9 tools)
+### Merge Requests (11 tools)
 
 | Tool | Method | Endpoint | Description |
 |------|--------|----------|-------------|
@@ -45,6 +45,8 @@ mcp-gitlab-crunchtools is a secure MCP server for the GitLab REST API v4. It pro
 | `get_mr_changes` | GET | `/projects/:id/merge_requests/:iid/changes` | Get MR diff |
 | `list_mr_discussions` | GET | `/projects/:id/merge_requests/:iid/discussions` | List threaded discussions |
 | `create_mr_discussion` | POST | `/projects/:id/merge_requests/:iid/discussions` | Create discussion |
+| `merge_merge_request` | PUT | `/projects/:id/merge_requests/:iid/merge` | Merge at a required head `sha`, or auto-merge on pipeline success |
+| `get_mr_pipelines` | GET | `/projects/:id/merge_requests/:iid/pipelines` | List MR pipelines (sha, status) |
 
 ### Issues (6 tools)
 
@@ -194,15 +196,15 @@ src/mcp_gitlab_crunchtools/
 ├── config.py            # SecretStr config, SSL, URL validation
 ├── errors.py            # Safe error hierarchy
 ├── models.py            # Pydantic input validation
-├── server.py            # FastMCP tool registrations (63 tools)
+├── server.py            # FastMCP tool registrations (65 tools)
 └── tools/
-    ├── __init__.py      # Re-exports all 63 functions
+    ├── __init__.py      # Re-exports all 65 functions
     ├── branches.py      # create, delete, compare
     ├── files.py         # tree, get, create, update
     ├── groups.py        # list, get, projects
     ├── issues.py        # CRUD + notes
     ├── labels.py        # CRUD
-    ├── merge_requests.py # CRUD + notes + discussions + changes
+    ├── merge_requests.py # CRUD + notes + discussions + changes + merge + pipelines
     ├── milestones.py    # list, create, update
     ├── pipelines.py     # CRUD + jobs
     ├── projects.py      # list, get, create, delete, branches, commits
