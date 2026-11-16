@@ -32,6 +32,14 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
   `sha` it ran on and its `status`, so a caller can see that the head passed
   CI before merging. 65 tools now.
 
+### Fixed
+
+- **A user who may not merge an MR is told so (#79).** GitLab answers the
+  merge with 401 when a valid token lacks merge rights, and the client's
+  global 401 handling reported it as a bad Personal Access Token. After the
+  MR lookup has succeeded with the same token, a 401 on the merge is now a
+  `MergeRefusedError`: "this user is not allowed to merge it".
+
 ## [0.7.1] - 2026-11-10
 
 ### Fixed

@@ -268,9 +268,9 @@ class GitLabClient:
         error_msg = _error_detail(response, body)
 
         if status_code == 401:
-            raise PermissionDeniedError("Valid Personal Access Token")
+            raise PermissionDeniedError("Valid Personal Access Token", code=401)
         if status_code == 403:
-            raise PermissionDeniedError("Required permission scope")
+            raise PermissionDeniedError("Required permission scope", code=403)
         if status_code == 404:
             raise ProjectNotFoundError(error_msg)
         if status_code == 429:

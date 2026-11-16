@@ -48,7 +48,8 @@ class ProjectNotFoundError(UserError):
 class PermissionDeniedError(UserError):
     """Permission denied for the requested operation."""
 
-    def __init__(self, required_scope: str) -> None:
+    def __init__(self, required_scope: str, code: int | None = None) -> None:
+        self.code = code
         super().__init__(f"Permission denied. Required scope: {required_scope}")
 
 
