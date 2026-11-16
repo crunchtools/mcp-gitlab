@@ -8,6 +8,8 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-17
+
 ### Added
 
 - **`merge_merge_request` merges a merge request.** It calls `PUT
@@ -35,6 +37,11 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
   GitLab's insufficient scope, so it stays a permission error: the token
   needs fixing. (#80, reconciling the parallel fix in #82, which also turned
   a 403 into a refusal and left #80's handler unreachable.)
+
+### Security
+
+- **dnspython 2.9.2 (CVE-2026-128089).** The lock moves off 2.9.1, which
+  pip-audit refused; only `uv.lock` changes (#77).
 
 ## [0.7.1] - 2026-11-10
 
