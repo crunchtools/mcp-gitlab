@@ -411,7 +411,9 @@ async def merge_merge_request(
             commit ID (raised before any request).
         MergeRefusedError: the MR is a draft, has a conflict, is not open, or
             its head is not ``sha``; or GitLab refused the merge (401: this
-            user may not merge it; 405, 406, 409 or 422).
+            user is not allowed to merge it; 405, 406, 409 or 422).
+        PermissionDeniedError: a 403, which is GitLab's insufficient scope
+            (a read_api token, say): the token needs fixing.
         GitLabApiError: any other GitLab failure, unchanged.
     """
     validated = MergeMergeRequestInput(
@@ -440,10 +442,6 @@ async def merge_merge_request(
 
     try:
         result = await client.put(f"{path}/merge", json_data=payload)
-    except PermissionDeniedError as e:
-        # The GET above succeeded with this token, so a 401/403 here means
-        # the user may not merge this MR, not that the token is bad.
-        raise MergeRefusedError(merge_request_iid, "this user may not merge it") from e
     except GitLabApiError as e:
         if e.code in _MERGE_REFUSALS:
             raise MergeRefusedError(merge_request_iid, _MERGE_REFUSALS[e.code]) from e

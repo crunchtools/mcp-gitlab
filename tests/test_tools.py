@@ -878,15 +878,6 @@ class TestMergeMergeRequest:
             await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
 
     @pytest.mark.asyncio
-    async def test_a_401_on_merge_is_a_permission_refusal(self) -> None:
-        from mcp_gitlab_crunchtools.errors import MergeRefusedError
-        from mcp_gitlab_crunchtools.tools import merge_merge_request
-
-        _seen, handler = _merge_server(_OPEN_MR, put_status=401)
-        with _patch_transport(handler), pytest.raises(MergeRefusedError, match="may not merge"):
-            await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
-
-    @pytest.mark.asyncio
     async def test_a_sha256_commit_id_is_taken(self) -> None:
         from mcp_gitlab_crunchtools.tools import merge_merge_request
 
@@ -910,6 +901,19 @@ class TestMergeMergeRequest:
             await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
         assert "not allowed to merge" in str(raised.value)
         assert "Access Token" not in str(raised.value)
+
+    @pytest.mark.asyncio
+    async def test_a_403_on_the_merge_stays_a_scope_error(self) -> None:
+        # 403 is GitLab's insufficient_scope (a read_api token, say): the
+        # token needs fixing, so it is not turned into a merge refusal.
+        from mcp_gitlab_crunchtools.errors import MergeRefusedError, PermissionDeniedError
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        _seen, handler = _merge_server(_OPEN_MR, put_status=403)
+        with _patch_transport(handler), pytest.raises(PermissionDeniedError) as raised:
+            await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
+        assert not isinstance(raised.value, MergeRefusedError)
+        assert raised.value.code == 403
 
     @pytest.mark.asyncio
     async def test_a_401_on_the_lookup_is_still_a_token_error(self) -> None:

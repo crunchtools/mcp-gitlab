@@ -1,0 +1,7 @@
+[[findings]]
+agent = "bugs"
+category = "bug"
+file = "src/mcp_gitlab_crunchtools/tools/merge_requests.py"
+evidence = "    try:\n        result = await client.put(f\"{path}/merge\", json_data=payload)\n    except GitLabApiError as e:\n        if e.code in _MERGE_REFUSALS:\n            raise MergeRefusedError(merge_request_iid, _MERGE_REFUSALS[e.code]) from e"
+status = "not-a-bug"
+reason = "The 401 mapping is kept, not removed: the except PermissionDeniedError block below the GitLabApiError handler maps code 401 to MergeRefusedError. Only the duplicate catch-all from #82, which also swallowed 403, is deleted. test_a_401_on_the_merge_is_a_refusal_not_a_token_error covers it."
