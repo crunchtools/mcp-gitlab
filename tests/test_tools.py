@@ -878,6 +878,15 @@ class TestMergeMergeRequest:
             await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
 
     @pytest.mark.asyncio
+    async def test_a_401_on_merge_is_a_permission_refusal(self) -> None:
+        from mcp_gitlab_crunchtools.errors import MergeRefusedError
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        _seen, handler = _merge_server(_OPEN_MR, put_status=401)
+        with _patch_transport(handler), pytest.raises(MergeRefusedError, match="may not merge"):
+            await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
+
+    @pytest.mark.asyncio
     async def test_a_sha256_commit_id_is_taken(self) -> None:
         from mcp_gitlab_crunchtools.tools import merge_merge_request
 
