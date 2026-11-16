@@ -629,8 +629,8 @@ async def merge_merge_request_tool(
 async def get_mr_pipelines_tool(
     project_id: str,
     merge_request_iid: PositiveId,
-    page: int = 1,
-    per_page: int = 20,
+    page: PositiveId = 1,
+    per_page: PositiveId = 20,
 ) -> dict[str, Any]:
     """List the pipelines of a merge request, newest first.
 

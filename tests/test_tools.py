@@ -899,6 +899,13 @@ class TestMergeMergeRequest:
         assert call.kwargs["url"] == "/projects/1/merge_requests/5/pipelines"
         assert result["items"][0]["status"] == "success"
 
+    @pytest.mark.asyncio
+    async def test_get_mr_pipelines_publishes_positive_paging(self) -> None:
+        tool = next(t for t in await mcp.list_tools() if t.name == "get_mr_pipelines_tool")
+        props = tool.parameters["properties"]
+        assert props["page"]["minimum"] == 1
+        assert props["per_page"]["minimum"] == 1
+
 
 class TestSearchTools:
     """Tests for search tools with mocked API responses."""
