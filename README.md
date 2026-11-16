@@ -46,7 +46,7 @@ The container image is built on the [Hummingbird Python base image](https://quay
 - `get_group` - Get group details by ID or path
 - `list_group_projects` - List projects in a group (with subgroup support)
 
-### Merge Requests (7 tools)
+### Merge Requests (11 tools)
 - `list_merge_requests` - List MRs by state, labels, milestone
 - `get_merge_request` - Get MR details
 - `create_merge_request` - Create a new MR
@@ -54,6 +54,10 @@ The container image is built on the [Hummingbird Python base image](https://quay
 - `list_mr_notes` - List comments on an MR
 - `create_mr_note` - Add a comment to an MR
 - `get_mr_changes` - Get the diff for an MR
+- `list_mr_discussions` - List threaded discussions on an MR
+- `create_mr_discussion` - Start a discussion on an MR
+- `merge_merge_request` - Merge an MR at a required head `sha`, or set it to merge when its pipeline succeeds; refuses drafts, conflicts and a moved head
+- `get_mr_pipelines` - List an MR's pipelines with the `sha` and `status` of each, to check CI before merging
 
 ### Issues (6 tools)
 - `list_issues` - List issues by state, labels, milestone, assignee

@@ -21,9 +21,11 @@ from .merge_requests import (
     create_mr_note,
     get_merge_request,
     get_mr_changes,
+    get_mr_pipelines,
     list_merge_requests,
     list_mr_discussions,
     list_mr_notes,
+    merge_merge_request,
     update_merge_request,
 )
 from .milestones import create_milestone, list_milestones, update_milestone
@@ -85,6 +87,7 @@ __all__ = [
     "get_job_log",
     "get_merge_request",
     "get_mr_changes",
+    "get_mr_pipelines",
     "get_pipeline",
     "get_project",
     "get_project_branch",
@@ -110,6 +113,7 @@ __all__ = [
     "list_snippets",
     "list_users",
     "list_wiki_pages",
+    "merge_merge_request",
     "retry_job",
     "retry_pipeline",
     "search_global",

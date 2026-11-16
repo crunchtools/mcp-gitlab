@@ -8,6 +8,23 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+### Added
+
+- **`merge_merge_request` merges a merge request.** It calls `PUT
+  /projects/:id/merge_requests/:iid/merge` with a required `sha`, the full
+  commit ID the source branch head must still be, so nothing pushed after
+  review can be merged with it. `merge_when_pipeline_succeeds` sets auto-merge
+  instead, and `squash` and `should_remove_source_branch` override the MR's
+  own settings when given. A draft, a conflict, an MR that is not open, or a
+  head that has moved is refused before anything is sent, and GitLab's own
+  405/406/409/422 refusals come back as one clean error. It returns `merged`,
+  `state`, `auto_merge` and `detailed_merge_status`, plus the merge or squash
+  commit. Until now nothing could merge, and callers faked auto-merge with
+  `git push -o merge_request.merge_when_pipeline_succeeds`.
+- **`get_mr_pipelines` lists a merge request's pipelines**, each with the
+  `sha` it ran on and its `status`, so a caller can see that the head passed
+  CI before merging. 65 tools now.
+
 ## [0.7.1] - 2026-11-10
 
 ### Fixed

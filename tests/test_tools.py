@@ -4,12 +4,15 @@ These tests verify tool behavior without making actual API calls.
 Integration tests with a real GitLab account should be run separately.
 """
 
+import json
 import os
+from typing import Any
 
+import httpx
 import pytest
 
 from mcp_gitlab_crunchtools.server import mcp
-from tests.conftest import _mock_response, _patch_client
+from tests.conftest import _mock_response, _patch_client, _patch_transport
 
 
 class TestToolRegistration:
@@ -31,10 +34,10 @@ class TestToolRegistration:
             assert callable(func), f"{name} is not callable"
 
     def test_tool_count(self) -> None:
-        """Server should have exactly 63 tools registered."""
+        """Server should have exactly 65 tools registered."""
         from mcp_gitlab_crunchtools.tools import __all__
 
-        assert len(__all__) == 63
+        assert len(__all__) == 65
 
 
 READ_ONLY = frozenset(
@@ -52,6 +55,7 @@ READ_ONLY = frozenset(
         "list_mr_notes_tool",
         "get_mr_changes_tool",
         "list_mr_discussions_tool",
+        "get_mr_pipelines_tool",
         "list_issues_tool",
         "get_issue_tool",
         "list_issue_notes_tool",
@@ -82,6 +86,7 @@ WRITES = frozenset(
         "delete_project_tool",
         "create_merge_request_tool",
         "update_merge_request_tool",
+        "merge_merge_request_tool",
         "create_mr_note_tool",
         "create_mr_discussion_tool",
         "create_issue_tool",
@@ -125,6 +130,7 @@ READ_ONLY_CALLS: dict[str, dict[str, object]] = {
     "list_merge_requests_tool": _PROJECT,
     "get_merge_request_tool": _MR,
     "list_mr_notes_tool": _MR,
+    "get_mr_pipelines_tool": _MR,
     "get_mr_changes_tool": _MR,
     "list_mr_discussions_tool": _MR,
     "list_issues_tool": _PROJECT,
@@ -757,6 +763,187 @@ class TestMergeRequestTools:
             result = await get_mr_changes(project_id="1", merge_request_iid=5)
 
         assert len(result["changes"]) == 1
+
+
+SHA = "0123456789abcdef0123456789abcdef01234567"
+_OPEN_MR = {
+    "iid": 5,
+    "state": "opened",
+    "draft": False,
+    "work_in_progress": False,
+    "has_conflicts": False,
+    "sha": SHA,
+}
+
+
+def _merge_server(
+    mr: dict[str, Any], put_status: int = 200, put_body: dict[str, Any] | None = None
+) -> tuple[list[httpx.Request], Any]:
+    """A GitLab that answers the MR GET with ``mr`` and the merge PUT as told."""
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.method == "GET":
+            return httpx.Response(200, json=mr)
+        assert request.url.path == "/api/v4/projects/1/merge_requests/5/merge"
+        return httpx.Response(put_status, json=put_body or {"message": "refused"})
+
+    return seen, handler
+
+
+class TestMergeMergeRequest:
+    """merge_merge_request: refuses what cannot merge, and pins the head SHA."""
+
+    @pytest.mark.asyncio
+    async def test_merges_with_the_sha(self) -> None:
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        merged = {**_OPEN_MR, "state": "merged", "merge_commit_sha": "f" * 40}
+        seen, handler = _merge_server(_OPEN_MR, put_body=merged)
+        with _patch_transport(handler):
+            result = await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
+
+        put = seen[-1]
+        assert put.method == "PUT"
+        assert json.loads(put.content) == {"sha": SHA, "merge_when_pipeline_succeeds": False}
+        assert result["merged"] is True
+        assert result["state"] == "merged"
+        assert result["merge_commit_sha"] == "f" * 40
+
+    @pytest.mark.asyncio
+    async def test_auto_merge_reports_its_status(self) -> None:
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        waiting = {
+            **_OPEN_MR,
+            "merge_when_pipeline_succeeds": True,
+            "detailed_merge_status": "ci_still_running",
+        }
+        seen, handler = _merge_server(_OPEN_MR, put_body=waiting)
+        with _patch_transport(handler):
+            result = await merge_merge_request(
+                project_id="1",
+                merge_request_iid=5,
+                sha=SHA.upper(),
+                merge_when_pipeline_succeeds=True,
+                squash=True,
+                should_remove_source_branch=False,
+            )
+
+        assert json.loads(seen[-1].content) == {
+            "sha": SHA,
+            "merge_when_pipeline_succeeds": True,
+            "squash": True,
+            "should_remove_source_branch": False,
+        }
+        assert result["merged"] is False
+        assert result["auto_merge"] is True
+        assert result["detailed_merge_status"] == "ci_still_running"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("change", "reason"),
+        [
+            ({"draft": True}, "draft"),
+            ({"draft": False, "work_in_progress": True}, "draft"),
+            ({"has_conflicts": True}, "conflict"),
+            ({"state": "closed"}, "not open"),
+            ({"state": "merged"}, "not open"),
+            ({"sha": "9" * 40}, "head"),
+        ],
+    )
+    async def test_refuses_before_sending_a_merge(
+        self, change: dict[str, Any], reason: str
+    ) -> None:
+        from mcp_gitlab_crunchtools.errors import MergeRefusedError
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        seen, handler = _merge_server({**_OPEN_MR, **change})
+        with _patch_transport(handler), pytest.raises(MergeRefusedError, match=reason):
+            await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
+        assert [r.method for r in seen] == ["GET"]
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("status", "reason"),
+        [(405, "cannot be merged"), (406, "conflict"), (409, "head"), (422, "cannot be merged")],
+    )
+    async def test_a_refusal_from_gitlab_is_clean(self, status: int, reason: str) -> None:
+        from mcp_gitlab_crunchtools.errors import MergeRefusedError
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        _seen, handler = _merge_server(_OPEN_MR, put_status=status)
+        with _patch_transport(handler), pytest.raises(MergeRefusedError, match=reason):
+            await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
+
+    @pytest.mark.asyncio
+    async def test_a_sha256_commit_id_is_taken(self) -> None:
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        sha256 = "ab" * 32
+        mr = {**_OPEN_MR, "sha": sha256}
+        seen, handler = _merge_server(mr, put_body={**mr, "state": "merged"})
+        with _patch_transport(handler):
+            result = await merge_merge_request(project_id="1", merge_request_iid=5, sha=sha256)
+        assert json.loads(seen[-1].content)["sha"] == sha256
+        assert result["merged"] is True
+
+    @pytest.mark.asyncio
+    async def test_any_other_gitlab_error_passes_through(self) -> None:
+        from mcp_gitlab_crunchtools.errors import GitLabApiError, MergeRefusedError
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        _seen, handler = _merge_server(_OPEN_MR, put_status=500)
+        with _patch_transport(handler), pytest.raises(GitLabApiError) as raised:
+            await merge_merge_request(project_id="1", merge_request_iid=5, sha=SHA)
+        assert not isinstance(raised.value, MergeRefusedError)
+        assert raised.value.code == 500
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("sha", ["", "abc1234", "z" * 40, SHA + "0"])
+    async def test_a_sha_that_is_not_a_full_commit_id_is_refused(self, sha: str) -> None:
+        from mcp_gitlab_crunchtools.tools import merge_merge_request
+
+        seen, handler = _merge_server(_OPEN_MR)
+        with _patch_transport(handler), pytest.raises(ValueError, match="sha"):
+            await merge_merge_request(project_id="1", merge_request_iid=5, sha=sha)
+        assert seen == []
+
+    @pytest.mark.asyncio
+    async def test_get_mr_pipelines(self) -> None:
+        from mcp_gitlab_crunchtools.tools import get_mr_pipelines
+
+        resp = _mock_response(json_data=[{"id": 9, "sha": SHA, "status": "success"}])
+        with _patch_client(resp) as client_cls:
+            result = await get_mr_pipelines(project_id="1", merge_request_iid=5)
+
+        call = client_cls.return_value.build_request.call_args
+        assert call.kwargs["url"] == "/projects/1/merge_requests/5/pipelines"
+        assert result["items"][0]["status"] == "success"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("page", "per_page", "sent"), [(3, 50, 50), (1, 100, 100), (2, 500, 100)]
+    )
+    async def test_get_mr_pipelines_forwards_paging(
+        self, page: int, per_page: int, sent: int
+    ) -> None:
+        from mcp_gitlab_crunchtools.tools import get_mr_pipelines
+
+        with _patch_client(_mock_response(json_data=[])) as client_cls:
+            await get_mr_pipelines(
+                project_id="1", merge_request_iid=5, page=page, per_page=per_page
+            )
+        params = client_cls.return_value.build_request.call_args.kwargs["params"]
+        assert params == {"page": page, "per_page": sent}
+
+    @pytest.mark.asyncio
+    async def test_get_mr_pipelines_publishes_positive_paging(self) -> None:
+        tool = next(t for t in await mcp.list_tools() if t.name == "get_mr_pipelines_tool")
+        props = tool.parameters["properties"]
+        assert props["page"]["minimum"] == 1
+        assert props["per_page"]["minimum"] == 1
 
 
 class TestSearchTools:

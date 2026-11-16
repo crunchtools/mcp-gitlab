@@ -30,6 +30,7 @@ class GitLabApiError(UserError):
     def __init__(self, code: int, message: str) -> None:
         token = os.environ.get("GITLAB_TOKEN", "")
         safe_message = message.replace(token, "***") if token else message
+        self.code = code
         super().__init__(f"GitLab API error {code}: {safe_message}")
 
 
@@ -63,3 +64,10 @@ class RateLimitError(UserError):
 
 class ValidationError(UserError):
     """Input validation error."""
+
+
+class MergeRefusedError(UserError):
+    """A merge request that cannot be merged as asked."""
+
+    def __init__(self, merge_request_iid: int, reason: str) -> None:
+        super().__init__(f"Merge request !{merge_request_iid} not merged: {reason}")

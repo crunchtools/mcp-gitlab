@@ -39,6 +39,7 @@ from .tools import (
     get_job_log,
     get_merge_request,
     get_mr_changes,
+    get_mr_pipelines,
     get_pipeline,
     get_project,
     get_project_branch,
@@ -64,6 +65,7 @@ from .tools import (
     list_snippets,
     list_users,
     list_wiki_pages,
+    merge_merge_request,
     retry_job,
     retry_pipeline,
     search_global,
@@ -581,6 +583,75 @@ async def get_mr_changes_tool(
         Merge request details with file diffs
     """
     return await get_mr_changes(project_id=project_id, merge_request_iid=merge_request_iid)
+
+
+@mcp.tool()
+async def merge_merge_request_tool(
+    *,
+    project_id: str,
+    merge_request_iid: PositiveId,
+    sha: str,
+    merge_when_pipeline_succeeds: bool = False,
+    squash: bool | None = None,
+    should_remove_source_branch: bool | None = None,
+) -> dict[str, Any]:
+    """Merge a merge request, or set it to merge when its pipeline succeeds.
+
+    sha is required and must be the full commit ID of the source branch head
+    (the MR's "sha" field): GitLab merges only if the head is still that
+    commit, so nothing pushed after review can slip in. A draft, a conflict,
+    a closed MR or a moved head is refused without merging. Check CI first
+    with get_mr_pipelines.
+
+    Args:
+        project_id: Project ID or path
+        merge_request_iid: Merge request internal ID
+        sha: Full commit ID the source branch head must be
+        merge_when_pipeline_succeeds: Merge once the head pipeline passes (default: false)
+        squash: Squash commits on merge (omit to keep the MR's setting)
+        should_remove_source_branch: Remove the source branch (omit to keep the MR's setting)
+
+    Returns:
+        merged (bool), state, auto_merge (bool), detailed_merge_status and the
+        merge or squash commit SHA
+    """
+    return await merge_merge_request(
+        project_id=project_id,
+        merge_request_iid=merge_request_iid,
+        sha=sha,
+        merge_when_pipeline_succeeds=merge_when_pipeline_succeeds,
+        squash=squash,
+        should_remove_source_branch=should_remove_source_branch,
+    )
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def get_mr_pipelines_tool(
+    project_id: str,
+    merge_request_iid: PositiveId,
+    page: PositiveId = 1,
+    per_page: PositiveId = 20,
+) -> dict[str, Any]:
+    """List the pipelines of a merge request, newest first.
+
+    Each pipeline carries the sha it ran on and its status (success, failed,
+    running, ...), so you can confirm the MR head passed CI before merging.
+
+    Args:
+        project_id: Project ID or path
+        merge_request_iid: Merge request internal ID
+        page: Page number (default: 1)
+        per_page: Results per page (default: 20, max: 100)
+
+    Returns:
+        List of pipelines with pagination info
+    """
+    return await get_mr_pipelines(
+        project_id=project_id,
+        merge_request_iid=merge_request_iid,
+        page=page,
+        per_page=per_page,
+    )
 
 
 @mcp.tool(annotations=READ_ONLY)
