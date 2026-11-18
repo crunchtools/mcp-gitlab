@@ -8,6 +8,14 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+### Changed
+- The container release runs constitution v1.51.0's `container-release.yml`
+  (was v1.46.0) and grants it `issues: write`, so a failed scheduled rebuild
+  opens an issue instead of only warning. A `v*` promote now also refuses an
+  image whose `version` label names a different release of this repo, so the
+  release PR must keep moving the Containerfile label along with the other
+  version strings.
+
 ## [0.8.0] - 2026-11-17
 
 ### Added
