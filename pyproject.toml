@@ -86,3 +86,6 @@ skip = ["semgrep"]
 [tool.sdlc.push.pytest]
 env = { GITLAB_TOKEN = "test_token_for_ci" }
 
+
+[tool.sdlc]
+repo-kinds = ["mcp-server"]
