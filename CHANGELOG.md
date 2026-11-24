@@ -8,6 +8,8 @@ Entries prior to 2026-09-19 are back-filled from GitHub Release notes (RT #1484)
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-24
+
 ### Changed
 - Gatehouse triage gets `review_result`, so a PR whose review job died before posting anything is held instead of passing.
 - Promote signs the image with the fleet cosign key (`sign: true`), because
